@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leme - Catálogo Exclusivo</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cinzel:wght@500;600;700;800&family=Montserrat:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="top-bar">
+        <p>✨ A direção que você busca está aqui ✨</p>
+    </div>
+
+    <header class="navbar">
+        <div class="nav-container">
+
+            <button class="menu-btn" id="openNavBtn" aria-label="Abrir Menu">
+                <i class="fa-solid fa-bars"></i>
+                <span>Menu</span>
+            </button>
+
+            <a href="#" class="brand-logo">
+                <i class="fa-solid fa-dharmachakra logo-icon"></i>
+                <div class="logo-text-group">
+                    <span class="logo-title">Leme</span>
+                </div>
+            </a>
+
+            <div class="nav-actions">
+                <a href="https://www.instagram.com/use.leme" target="_blank" class="icon-link"
+                    title="Siga no Instagram @use.leme">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+                <button class="cart-btn" id="openCartBtn" aria-label="Abrir Carrinho">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <aside class="sidebar-menu" id="sidebarMenu">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-dharmachakra logo-icon"></i>
+                <div class="logo-text-group">
+                    <span class="logo-title">Leme</span>
+                    <span class="logo-subtitle">MODA & ELEGÂNCIA</span>
+                </div>
+            </div>
+            <button class="close-btn" id="closeNavBtn">&times;</button>
+        </div>
+
+        <nav class="sidebar-links">
+            <ul>
+                <li><a href="#hero" class="active"><i class="fa-solid fa-house"></i> Início </a></li>
+                <li><a href="#catalogo" onclick="filterCategory('todos')"><i class="fa-solid fa-border-all"></i> Todo o
+                        Catálogo </a></li>
+                <li><a href="#catalogo" onclick="filterCategory('t-shirts-basicas')"><i class="fa-solid fa-shirt"></i>
+                        T-Shirts Básicas </a></li>
+                <li><a href="#catalogo" onclick="filterCategory('religiosas')"><i class="fa-solid fa-cross"></i>
+                        Religiosas </a></li>
+                <li><a href="#catalogo" onclick="filterCategory('personalizadas')"><i
+                            class="fa-solid fa-wand-magic-sparkles"></i> Personalizadas </a></li>
+                <li><a href="#catalogo" onclick="filterCategory('camisas-masculinas')"><i
+                            class="fa-solid fa-user-tie"></i> Camisas masculinas </a></li>
+                <li><a href="#catalogo" onclick="filterCategory('oversized')"><i class="fa-solid fa-expand"></i>
+                        Oversized </a></li>
+                <li class="divider"></li>
+                <li>
+                    <a href="https://www.instagram.com/use.leme" target="_blank" class="insta-menu-link">
+                        <i class="fa-brands fa-instagram"></i> Siga @use.leme
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+            <p>Dúvidas ou atendimento VIP?</p>
+            <a href="https://wa.me/5588996645739?text=Olá,%20gostaria%20de%20tirar%20uma%20dúvida!" target="_blank"
+                class="btn-whatsapp-sidebar">
+                <i class="fa-brands fa-whatsapp"></i> Falar com Consultora
+            </a>
+        </div>
+    </aside>
+    <div class="overlay" id="overlay"></div>
+
+    <section class="hero" id="hero">
+        <img src="./assets/Madeira_girando_com_sombra_20261005215634.gif" alt="Hero Image" class="hero-video-bg">
+
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <span class="sub-title">Nossas Coleções</span>
+            <h1>Propósito que direciona</h1>
+            <p>Peças exclusivas desenhadas para direcionar o seu brilho e elegância natural.</p>
+            <a href="#catalogo" class="btn-gold">Explorar Catálogo <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </section>
+
+    <main class="catalog-section" id="catalogo">
+        <div class="container">
+
+            <div class="section-header">
+                <h2>Nosso Catálogo</h2>
+                <div class="gold-line"></div>
+                <p>Selecione a categoria para encontrar sua próxima peça favorita</p>
+            </div>
+
+            <div class="filter-tabs">
+                <button class="tab-btn active" onclick="filterCategory('todos')">Todos</button>
+                <button class="tab-btn" onclick="filterCategory('t-shirts-basicas')">T-Shirts Básicas</button>
+                <button class="tab-btn" onclick="filterCategory('religiosas')">Religiosas</button>
+                <button class="tab-btn" onclick="filterCategory('personalizadas')">Personalizadas</button>
+                <button class="tab-btn" onclick="filterCategory('camisas-masculinas')">Camisas masculinas</button>
+                <button class="tab-btn" onclick="filterCategory('oversized')">Oversized</button>
+            </div>
+
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+    </main>
+
+    <div class="modal-product" id="productModal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeModalBtn">&times;</button>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <h3><i class="fa-solid fa-bag-shopping"></i> Seu Carrinho Leme</h3>
+            <button class="close-btn" id="closeCartBtn">&times;</button>
+        </div>
+
+        <div class="cart-items" id="cartItemsContainer"></div>
+
+        <div class="cart-footer">
+            <div class="cart-total-row">
+                <span>Subtotal:</span>
+                <strong id="cartTotal">R$ 0,00</strong>
+            </div>
+            <p class="cart-info"><i class="fa-solid fa-truck-fast"></i> Enviaremos a confirmação dos tamanhos e frete
+                pelo WhatsApp.</p>
+            <button class="btn-checkout" id="checkoutBtn" onclick="checkoutWhatsApp()">
+                <i class="fa-brands fa-whatsapp"></i> Enviar Pedido no WhatsApp
+            </button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container footer-grid">
+
+            <div class="footer-col brand-col">
+                <div class="brand-logo footer-brand">
+                    <i class="fa-solid fa-dharmachakra logo-icon"></i>
+                    <div class="logo-text-group">
+                        <span class="logo-title">Leme</span>
+                    </div>
+                </div>
+                <p>A essência do estilo clássico e moderno reunidos em peças atemporais em tons de luxo e leveza.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/use.leme" target="_blank" aria-label="Instagram"><i
+                            class="fa-brands fa-instagram"></i></a>
+                    <a href="https://wa.me/5588996645739" target="_blank" aria-label="WhatsApp"><i
+                            class="fa-brands fa-whatsapp"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>Navegação</h4>
+                <ul>
+                    <li><a href="#hero">Início</a></li>
+                    <li><a href="#catalogo">Coleção Completa</a></li>
+                    <li><a href="https://www.instagram.com/use.leme" target="_blank">Instagram Oficial</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>Atendimento</h4>
+                <p><i class="fa-solid fa-clock"></i> Seg a Sáb: 09h às 18h</p>
+                <p><i class="fa-solid fa-envelope"></i> contato@useleme.com.br</p>
+                <p><i class="fa-solid fa-location-dot"></i> Envio Seguro para Rio Grande do Norte</p>
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 Leme (@use.leme). Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
