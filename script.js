@@ -314,7 +314,7 @@ function checkoutWhatsApp() {
         return;
     }
 
-    const phoneNumber = "5588996645739";
+    const phoneNumber = "5585997560937";
 
     let message = `*Olá, Leme! Gostaria de fazer o seguinte pedido pelo Catálogo:* \n\n`;
 
