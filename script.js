@@ -1,6 +1,7 @@
-// Importações completas corretas via CDN oficial do Google
+// Importações completas corretas via CDN oficial do Google (Firestore + Autenticação)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 // Suas chaves reais do Firebase configuradas
 const firebaseConfig = {
@@ -12,11 +13,12 @@ const firebaseConfig = {
     appId: "1:392758923254:web:bad1bee41384f954df01d7"
 };
 
-let app, db, productsRef;
+let app, db, productsRef, auth;
 
 try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    auth = getAuth(app);
     productsRef = collection(db, "produtos");
 } catch (error) {
     console.error("Erro na inicialização do Firebase:", error);
@@ -31,7 +33,7 @@ const defaultProducts = [
 let products = [];
 let cart = [];
 let isAdmin = false;
-const ADMIN_PASSWORD = "leme2026";
+// SENHA REMOVIDA DAQUI - SEGURANÇA TOTAL!
 
 window.selectedSize = 'M';
 window.selectedModalQuantity = 1;
@@ -102,6 +104,7 @@ function setupEventListeners() {
 
     document.getElementById('adminLoginBtn').addEventListener('click', () => {
         if(isAdmin) {
+            signOut(auth); // Desloga com segurança do servidor do Google
             isAdmin = false;
             adminPanel.style.display = 'none';
             alert("Modo Admin desativado.");
@@ -149,19 +152,37 @@ window.handleUrlInput = function(urlValue, fileInputId, hiddenInputId, previewIm
     }
 }
 
-window.verifyAdmin = function() {
+// ====== LOGIN SEGURO VIA FIREBASE AUTH ======
+window.verifyAdmin = async function() {
+    const email = document.getElementById('adminEmail').value;
     const pass = document.getElementById('adminPassword').value;
-    if (pass === ADMIN_PASSWORD) {
+    const btn = document.getElementById('btnFazerLogin');
+    
+    if(!email || !pass) {
+        alert("Preencha o e-mail e a senha.");
+        return;
+    }
+
+    btn.innerText = "Aguarde...";
+
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        
         isAdmin = true;
+        document.getElementById('adminEmail').value = '';
         document.getElementById('adminPassword').value = '';
         document.getElementById('adminErrorMsg').style.display = 'none';
         adminPanel.style.display = 'block';
-        alert("Acesso liberado! Banco de dados conectado.");
+        
+        alert("Acesso liberado! Banco de dados protegido conectado.");
         window.closeAllDrawers();
         renderProducts(products);
-    } else {
+    } catch (error) {
+        console.error(error);
         document.getElementById('adminErrorMsg').style.display = 'block';
     }
+    
+    btn.innerText = "Entrar";
 }
 
 function renderProducts(items) {
@@ -224,6 +245,8 @@ window.openAddModal = function() {
 }
 
 window.saveNewProduct = async function() {
+    if(!isAdmin) return alert("Você precisa estar logado para salvar.");
+
     const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
     const base64Img = document.getElementById('addProdImageBase64').value;
     const urlImg = document.getElementById('addProdImageUrl').value;
@@ -251,6 +274,7 @@ window.saveNewProduct = async function() {
             await setDoc(doc(productsRef, newProd.id.toString()), newProd);
         } catch (error) {
             console.error("Erro ao salvar na nuvem:", error);
+            alert("Permissão negada ou erro ao gravar no banco.");
         }
     }
 }
@@ -283,6 +307,8 @@ window.openEditModal = function(id) {
 }
 
 window.saveProductEdits = async function() {
+    if(!isAdmin) return alert("Você precisa estar logado para editar.");
+
     const id = parseInt(document.getElementById('editProdId').value);
     const index = products.findIndex(p => p.id === id);
     if (index === -1) return;
@@ -313,11 +339,14 @@ window.saveProductEdits = async function() {
             await setDoc(doc(productsRef, id.toString()), updatedProd);
         } catch (error) {
             console.error("Erro ao atualizar nuvem:", error);
+            alert("Permissão negada ou erro ao atualizar o banco.");
         }
     }
 }
 
 window.deleteProduct = async function(id) {
+    if(!isAdmin) return alert("Você precisa estar logado para excluir.");
+
     if(confirm("ATENÇÃO: Tem certeza que deseja excluir este produto?")) {
         products = products.filter(p => p.id !== id);
         window.filterCategory('todos');
