@@ -3,7 +3,6 @@ import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https
 
 // =========================================================
 // ⚠️ COLE AS CHAVES DO SEU FIREBASE AQUI EMBAIXO ⚠️
-// Exemplo: apiKey: "AIzaSyB...",
 // =========================================================
 const firebaseConfig = {
     apiKey: "Sua_API_Key_Aqui",
@@ -22,7 +21,7 @@ try {
     productsRef = collection(db, "produtos");
 } catch (error) {
     console.error("Erro na inicialização do Firebase:", error);
-    alert("ERRO: As chaves do Firebase (firebaseConfig) não estão preenchidas corretamente no topo do arquivo script.js.");
+    alert("ERRO: As chaves do Firebase não estão preenchidas corretamente no topo do arquivo script.js.");
 }
 
 const defaultProducts = [
@@ -32,13 +31,15 @@ const defaultProducts = [
 
 let products = [];
 let cart = [];
-let selectedSize = 'M';
-let selectedModalQuantity = 1;
 let isAdmin = false;
 const ADMIN_PASSWORD = "leme2026";
 
+// Tornando as variáveis de seleção globais para o HTML enxergar
+window.selectedSize = 'M';
+window.selectedModalQuantity = 1;
+
 async function loadProducts() {
-    if (!productsRef) return; // Trava se o Firebase falhou
+    if (!productsRef) return; 
 
     try {
         const querySnapshot = await getDocs(productsRef);
@@ -79,13 +80,27 @@ const editProductModal = document.getElementById('editProductModal');
 const addProductModal = document.getElementById('addProductModal');
 const adminPanel = document.getElementById('adminPanel');
 
+// ------ FUNÇÕES DE JANELAS (Tornando Globais) ------
+window.openSidebar = function() { window.closeAllDrawers(); sidebarMenu.classList.add('active'); overlay.classList.add('active'); }
+window.openCart = function() { window.closeAllDrawers(); cartDrawer.classList.add('active'); overlay.classList.add('active'); }
+window.closeModal = function() { productModal.classList.remove('active'); overlay.classList.remove('active'); }
+window.closeAllDrawers = function() {
+    sidebarMenu.classList.remove('active');
+    cartDrawer.classList.remove('active');
+    productModal.classList.remove('active');
+    adminLoginModal.classList.remove('active');
+    editProductModal.classList.remove('active');
+    addProductModal.classList.remove('active');
+    overlay.classList.remove('active');
+}
+
 function setupEventListeners() {
-    document.getElementById('openNavBtn').addEventListener('click', openSidebar);
-    document.getElementById('closeNavBtn').addEventListener('click', closeAllDrawers);
-    document.getElementById('openCartBtn').addEventListener('click', openCart);
-    document.getElementById('closeCartBtn').addEventListener('click', closeAllDrawers);
-    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-    overlay.addEventListener('click', closeAllDrawers);
+    document.getElementById('openNavBtn').addEventListener('click', window.openSidebar);
+    document.getElementById('closeNavBtn').addEventListener('click', window.closeAllDrawers);
+    document.getElementById('openCartBtn').addEventListener('click', window.openCart);
+    document.getElementById('closeCartBtn').addEventListener('click', window.closeAllDrawers);
+    document.getElementById('closeModalBtn').addEventListener('click', window.closeModal);
+    overlay.addEventListener('click', window.closeAllDrawers);
 
     document.getElementById('adminLoginBtn').addEventListener('click', () => {
         if(isAdmin) {
@@ -98,9 +113,9 @@ function setupEventListeners() {
             overlay.classList.add('active');
         }
     });
-    document.getElementById('closeAdminLoginBtn').addEventListener('click', closeAllDrawers);
-    document.getElementById('closeEditModalBtn').addEventListener('click', closeAllDrawers);
-    document.getElementById('closeAddModalBtn').addEventListener('click', closeAllDrawers);
+    document.getElementById('closeAdminLoginBtn').addEventListener('click', window.closeAllDrawers);
+    document.getElementById('closeEditModalBtn').addEventListener('click', window.closeAllDrawers);
+    document.getElementById('closeAddModalBtn').addEventListener('click', window.closeAllDrawers);
 }
 
 window.processImage = function(inputElement, hiddenInputId, previewImgId, urlInputId) {
@@ -144,7 +159,7 @@ window.verifyAdmin = function() {
         document.getElementById('adminErrorMsg').style.display = 'none';
         adminPanel.style.display = 'block';
         alert("Acesso liberado! Banco de dados conectado.");
-        closeAllDrawers();
+        window.closeAllDrawers();
         renderProducts(products);
     } else {
         document.getElementById('adminErrorMsg').style.display = 'block';
@@ -163,15 +178,15 @@ function renderProducts(items) {
         card.className = 'product-card';
         
         let btnCartHtml = product.stock > 0 
-            ? `<button class="btn-add-cart" onclick="openQuickView(${product.id})"><i class="fa-solid fa-bag-shopping"></i> Comprar</button>`
+            ? `<button class="btn-add-cart" onclick="window.openQuickView(${product.id})"><i class="fa-solid fa-bag-shopping"></i> Comprar</button>`
             : `<button class="btn-add-cart" style="opacity: 0.5; cursor: not-allowed;"><i class="fa-solid fa-ban"></i> Esgotado</button>`;
         
         if (product.stock === 0) product.badge = "Esgotado";
 
         const adminControlsHtml = isAdmin ? `
             <div class="admin-card-controls">
-                <button class="btn-edit-product" onclick="openEditModal(${product.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-delete-product" onclick="deleteProduct(${product.id})" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+                <button class="btn-edit-product" onclick="window.openEditModal(${product.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-delete-product" onclick="window.deleteProduct(${product.id})" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
             </div>
         ` : '';
 
@@ -180,7 +195,7 @@ function renderProducts(items) {
             <span class="product-badge">${product.badge}</span>
             <div class="product-image">
                 <img src="${product.image}" alt="${product.name}">
-                <button class="quick-view-btn" onclick="openQuickView(${product.id})"><i class="fa-solid fa-eye"></i> Ver Peça</button>
+                <button class="quick-view-btn" onclick="window.openQuickView(${product.id})"><i class="fa-solid fa-eye"></i> Ver Peça</button>
             </div>
             <div class="product-info">
                 <span class="product-category">${product.category.replace(/-/g, ' ')}</span>
@@ -233,9 +248,9 @@ window.saveNewProduct = async function() {
         await setDoc(doc(productsRef, newProd.id.toString()), newProd);
         
         products.push(newProd);
-        closeAllDrawers();
+        window.closeAllDrawers();
         document.getElementById('closeAddModalBtn').innerHTML = "&times;";
-        filterCategory('todos'); 
+        window.filterCategory('todos'); 
         alert("Produto adicionado com sucesso no Banco de Dados!");
     } catch (error) {
         console.error("Erro:", error);
@@ -296,7 +311,7 @@ window.saveProductEdits = async function() {
         await setDoc(doc(productsRef, id.toString()), updatedProd);
         
         products[index] = updatedProd;
-        closeAllDrawers();
+        window.closeAllDrawers();
         renderProducts(products);
         alert("Produto atualizado na Nuvem com sucesso!");
     } catch (error) {
@@ -324,7 +339,6 @@ window.filterCategory = function(category) {
     const buttons = document.querySelectorAll('.tab-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
     
-    // Pequena correção para não dar conflito nas palavras no GitHub
     const categoryText = category.replace(/-/g, ' ');
     const activeBtn = Array.from(buttons).find(
         btn => btn.textContent.toLowerCase().includes(categoryText) || (category === 'todos' && btn.textContent.toLowerCase().includes('todos'))
@@ -334,37 +348,25 @@ window.filterCategory = function(category) {
     if (category === 'todos') renderProducts(products);
     else renderProducts(products.filter(p => p.category === category));
     
-    closeAllDrawers();
-}
-
-function openSidebar() { closeAllDrawers(); sidebarMenu.classList.add('active'); overlay.classList.add('active'); }
-function openCart() { closeAllDrawers(); cartDrawer.classList.add('active'); overlay.classList.add('active'); }
-
-function closeAllDrawers() {
-    sidebarMenu.classList.remove('active');
-    cartDrawer.classList.remove('active');
-    productModal.classList.remove('active');
-    adminLoginModal.classList.remove('active');
-    editProductModal.classList.remove('active');
-    addProductModal.classList.remove('active');
-    overlay.classList.remove('active');
+    window.closeAllDrawers();
 }
 
 window.openQuickView = function(id) {
     const product = products.find(p => p.id === id);
     if (!product) return;
 
-    selectedModalQuantity = 1;
+    window.selectedModalQuantity = 1; // Utiliza a variável global
     const sizesArray = product.sizes ? product.sizes.split(',').map(s => s.trim()) : ['Único'];
-    selectedSize = sizesArray[0];
+    window.selectedSize = sizesArray[0]; // Utiliza a variável global
     
     let sizesHtml = sizesArray.map(size => 
-        `<button class="size-btn ${selectedSize === size ? 'selected' : ''}" onclick="selectSize(this, '${size}')">${size}</button>`
+        `<button class="size-btn ${window.selectedSize === size ? 'selected' : ''}" onclick="window.selectSize(this, '${size}')">${size}</button>`
     ).join('');
 
     const isAvailable = product.stock > 0;
     const stockStatus = isAvailable ? `<span class="stock-badge stock-ok">Em estoque (${product.stock} disponíveis)</span>` : `<span class="stock-badge">Esgotado</span>`;
 
+    // Correção super importante no onclick do botão abaixo:
     const modalBody = document.getElementById('modalBody');
     modalBody.innerHTML = `
     <div class="modal-grid">
@@ -385,13 +387,13 @@ window.openQuickView = function(id) {
         <div class="quantity-selector">
           <label>Quantidade:</label>
           <div class="qty-controls">
-            <button class="qty-btn" onclick="changeModalQuantity(-1, ${product.stock})"><i class="fa-solid fa-minus"></i></button>
+            <button class="qty-btn" onclick="window.changeModalQuantity(-1, ${product.stock})"><i class="fa-solid fa-minus"></i></button>
             <span class="qty-val" id="modalQtyVal">1</span>
-            <button class="qty-btn" onclick="changeModalQuantity(1, ${product.stock})"><i class="fa-solid fa-plus"></i></button>
+            <button class="qty-btn" onclick="window.changeModalQuantity(1, ${product.stock})"><i class="fa-solid fa-plus"></i></button>
           </div>
         </div>
 
-        <button class="btn-gold" style="width:100%; justify-content:center;" ${!isAvailable ? 'disabled style="opacity:0.5;"' : ''} onclick="addToCart(${product.id}, selectedSize, selectedModalQuantity); closeModal(); openCart();">
+        <button class="btn-gold" style="width:100%; justify-content:center;" ${!isAvailable ? 'disabled style="opacity:0.5;"' : ''} onclick="window.addToCart(${product.id}, window.selectedSize, window.selectedModalQuantity); window.closeModal(); window.openCart();">
           <i class="fa-solid fa-bag-shopping"></i> ${isAvailable ? 'Confirmar e Adicionar' : 'Indisponível'}
         </button>
       </div>
@@ -402,25 +404,20 @@ window.openQuickView = function(id) {
 }
 
 window.selectSize = function(buttonElement, size) {
-    selectedSize = size;
+    window.selectedSize = size;
     const buttons = document.querySelectorAll('.size-btn');
     buttons.forEach(b => b.classList.remove('selected'));
     buttonElement.classList.add('selected');
 }
 
 window.changeModalQuantity = function(delta, maxStock) {
-    selectedModalQuantity += delta;
-    if (selectedModalQuantity < 1) selectedModalQuantity = 1;
-    if (selectedModalQuantity > maxStock) {
-        selectedModalQuantity = maxStock;
+    window.selectedModalQuantity += delta;
+    if (window.selectedModalQuantity < 1) window.selectedModalQuantity = 1;
+    if (window.selectedModalQuantity > maxStock) {
+        window.selectedModalQuantity = maxStock;
         alert(`Temos apenas ${maxStock} unidades em estoque.`);
     }
-    document.getElementById('modalQtyVal').textContent = selectedModalQuantity;
-}
-
-window.closeModal = function() {
-    productModal.classList.remove('active');
-    overlay.classList.remove('active');
+    document.getElementById('modalQtyVal').textContent = window.selectedModalQuantity;
 }
 
 window.addToCart = function(productId, size = 'M', quantity = 1) {
@@ -439,8 +436,7 @@ window.addToCart = function(productId, size = 'M', quantity = 1) {
         if(quantity > product.stock) return;
         cart.push({ ...product, size: size, quantity: quantity });
     }
-    updateCartUI();
-    openCart();
+    window.updateCartUI();
 }
 
 window.updateCartQuantity = function(index, delta) {
@@ -455,15 +451,15 @@ window.updateCartQuantity = function(index, delta) {
 
     cart[index].quantity = newQty;
     if (cart[index].quantity <= 0) cart.splice(index, 1);
-    updateCartUI();
+    window.updateCartUI();
 }
 
 window.removeFromCart = function(index) {
     cart.splice(index, 1);
-    updateCartUI();
+    window.updateCartUI();
 }
 
-function updateCartUI() {
+window.updateCartUI = function() {
     const cartContainer = document.getElementById('cartItemsContainer');
     const cartTotal = document.getElementById('cartTotal');
     const cartCount = document.getElementById('cartCount');
@@ -497,13 +493,13 @@ function updateCartUI() {
         <div class="cart-item-title">${item.name}</div>
         <div class="cart-item-size">Tam: <strong>${item.size}</strong></div>
         <div class="cart-qty-row">
-            <button class="btn-qty-mini" onclick="updateCartQuantity(${index}, -1)"><i class="fa-solid fa-minus"></i></button>
+            <button class="btn-qty-mini" onclick="window.updateCartQuantity(${index}, -1)"><i class="fa-solid fa-minus"></i></button>
             <span class="cart-qty-num">${item.quantity}</span>
-            <button class="btn-qty-mini" onclick="updateCartQuantity(${index}, 1)"><i class="fa-solid fa-plus"></i></button>
+            <button class="btn-qty-mini" onclick="window.updateCartQuantity(${index}, 1)"><i class="fa-solid fa-plus"></i></button>
         </div>
         <div class="cart-item-price">R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</div>
       </div>
-      <button class="cart-item-remove" onclick="removeFromCart(${index})"><i class="fa-solid fa-trash-can"></i></button>
+      <button class="cart-item-remove" onclick="window.removeFromCart(${index})"><i class="fa-solid fa-trash-can"></i></button>
     `;
         cartContainer.appendChild(itemElement);
     });
