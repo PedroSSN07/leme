@@ -36,11 +36,11 @@ window.selectedSize = 'M';
 window.selectedModalQuantity = 1;
 
 async function loadProducts() {
-    if (!productsRef) return; 
+    if (!productsRef) return;
 
     try {
         const querySnapshot = await getDocs(productsRef);
-        
+
         if (querySnapshot.empty) {
             products = [...defaultProducts];
             for (let p of products) {
@@ -52,10 +52,10 @@ async function loadProducts() {
                 products.push(doc.data());
             });
         }
-        
+
         products.sort((a, b) => a.id - b.id);
         renderProducts(products);
-        
+
     } catch (error) {
         console.error("Erro ao puxar dados da nuvem:", error);
         products = [...defaultProducts];
@@ -78,10 +78,10 @@ const editProductModal = document.getElementById('editProductModal');
 const addProductModal = document.getElementById('addProductModal');
 const adminPanel = document.getElementById('adminPanel');
 
-window.openSidebar = function() { window.closeAllDrawers(); sidebarMenu.classList.add('active'); overlay.classList.add('active'); }
-window.openCart = function() { window.closeAllDrawers(); cartDrawer.classList.add('active'); overlay.classList.add('active'); }
-window.closeModal = function() { productModal.classList.remove('active'); overlay.classList.remove('active'); }
-window.closeAllDrawers = function() {
+window.openSidebar = function () { window.closeAllDrawers(); sidebarMenu.classList.add('active'); overlay.classList.add('active'); }
+window.openCart = function () { window.closeAllDrawers(); cartDrawer.classList.add('active'); overlay.classList.add('active'); }
+window.closeModal = function () { productModal.classList.remove('active'); overlay.classList.remove('active'); }
+window.closeAllDrawers = function () {
     sidebarMenu.classList.remove('active');
     cartDrawer.classList.remove('active');
     productModal.classList.remove('active');
@@ -100,7 +100,7 @@ function setupEventListeners() {
     overlay.addEventListener('click', window.closeAllDrawers);
 
     document.getElementById('adminLoginBtn').addEventListener('click', () => {
-        if(isAdmin) {
+        if (isAdmin) {
             signOut(auth);
             isAdmin = false;
             adminPanel.style.display = 'none';
@@ -116,45 +116,45 @@ function setupEventListeners() {
     document.getElementById('closeAddModalBtn').addEventListener('click', window.closeAllDrawers);
 }
 
-window.processImage = function(inputElement, hiddenInputId, previewImgId, urlInputId) {
+window.processImage = function (inputElement, hiddenInputId, previewImgId, urlInputId) {
     const file = inputElement.files[0];
     if (file) {
-        if (file.size > 800000) { 
+        if (file.size > 800000) {
             alert("A imagem é muito pesada (maior que 800kb). Escolha uma foto menor ou use a opção de Link (URL).");
             inputElement.value = '';
             return;
         }
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             const base64String = e.target.result;
-            document.getElementById(hiddenInputId).value = base64String; 
+            document.getElementById(hiddenInputId).value = base64String;
             const previewImg = document.getElementById(previewImgId);
             previewImg.src = base64String;
             previewImg.style.display = 'inline-block';
-            if(urlInputId) document.getElementById(urlInputId).value = ''; 
+            if (urlInputId) document.getElementById(urlInputId).value = '';
         };
         reader.readAsDataURL(file);
     }
 }
 
-window.handleUrlInput = function(urlValue, fileInputId, hiddenInputId, previewImgId) {
+window.handleUrlInput = function (urlValue, fileInputId, hiddenInputId, previewImgId) {
     document.getElementById(fileInputId).value = '';
     document.getElementById(hiddenInputId).value = '';
     const previewImg = document.getElementById(previewImgId);
     if (urlValue.trim() !== '') {
-        previewImg.src = urlValue; 
+        previewImg.src = urlValue;
         previewImg.style.display = 'inline-block';
     } else {
         previewImg.style.display = 'none';
     }
 }
 
-window.verifyAdmin = async function() {
+window.verifyAdmin = async function () {
     const email = document.getElementById('adminEmail').value;
     const pass = document.getElementById('adminPassword').value;
     const btn = document.getElementById('btnFazerLogin');
-    
-    if(!email || !pass) {
+
+    if (!email || !pass) {
         alert("Preencha o e-mail e a senha.");
         return;
     }
@@ -163,13 +163,13 @@ window.verifyAdmin = async function() {
 
     try {
         await signInWithEmailAndPassword(auth, email, pass);
-        
+
         isAdmin = true;
         document.getElementById('adminEmail').value = '';
         document.getElementById('adminPassword').value = '';
         document.getElementById('adminErrorMsg').style.display = 'none';
         adminPanel.style.display = 'block';
-        
+
         alert("Acesso liberado! Banco de dados protegido conectado.");
         window.closeAllDrawers();
         renderProducts(products);
@@ -177,7 +177,7 @@ window.verifyAdmin = async function() {
         console.error(error);
         document.getElementById('adminErrorMsg').style.display = 'block';
     }
-    
+
     btn.innerText = "Entrar";
 }
 
@@ -191,11 +191,11 @@ function renderProducts(items) {
     items.forEach(product => {
         const card = document.createElement('div');
         card.className = 'product-card';
-        
-        let btnCartHtml = product.stock > 0 
+
+        let btnCartHtml = product.stock > 0
             ? `<button class="btn-add-cart" onclick="window.openQuickView(${product.id})"><i class="fa-solid fa-bag-shopping"></i> Comprar</button>`
             : `<button class="btn-add-cart" style="opacity: 0.5; cursor: not-allowed;"><i class="fa-solid fa-ban"></i> Esgotado</button>`;
-        
+
         if (product.stock === 0) product.badge = "Esgotado";
 
         const adminControlsHtml = isAdmin ? `
@@ -224,7 +224,7 @@ function renderProducts(items) {
     });
 }
 
-window.openAddModal = function() {
+window.openAddModal = function () {
     document.getElementById('addProdName').value = '';
     document.getElementById('addProdImageUrl').value = '';
     document.getElementById('addProdImageFile').value = '';
@@ -240,8 +240,8 @@ window.openAddModal = function() {
     overlay.classList.add('active');
 }
 
-window.saveNewProduct = async function() {
-    if(!isAdmin) return alert("Você precisa estar logado para salvar.");
+window.saveNewProduct = async function () {
+    if (!isAdmin) return alert("Você precisa estar logado para salvar.");
 
     const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
     const base64Img = document.getElementById('addProdImageBase64').value;
@@ -262,10 +262,10 @@ window.saveNewProduct = async function() {
 
     products.push(newProd);
     window.closeAllDrawers();
-    window.filterCategory('todos'); 
+    window.filterCategory('todos');
     alert("Produto adicionado com sucesso!");
 
-    if(productsRef) {
+    if (productsRef) {
         try {
             await setDoc(doc(productsRef, newProd.id.toString()), newProd);
         } catch (error) {
@@ -275,18 +275,18 @@ window.saveNewProduct = async function() {
     }
 }
 
-window.openEditModal = function(id) {
+window.openEditModal = function (id) {
     const product = products.find(p => p.id === id);
     if (!product) return;
 
     document.getElementById('editProdId').value = product.id;
     document.getElementById('editProdName').value = product.name;
-    
+
     const isBase64 = product.image.startsWith('data:image');
     document.getElementById('editProdImageUrl').value = isBase64 ? '' : product.image;
     document.getElementById('editProdImageBase64').value = isBase64 ? product.image : '';
-    document.getElementById('editProdImageFile').value = ''; 
-    
+    document.getElementById('editProdImageFile').value = '';
+
     const previewImg = document.getElementById('editProdImagePreview');
     previewImg.src = product.image;
     previewImg.style.display = 'inline-block';
@@ -302,8 +302,8 @@ window.openEditModal = function(id) {
     overlay.classList.add('active');
 }
 
-window.saveProductEdits = async function() {
-    if(!isAdmin) return alert("Você precisa estar logado para editar.");
+window.saveProductEdits = async function () {
+    if (!isAdmin) return alert("Você precisa estar logado para editar.");
 
     const id = parseInt(document.getElementById('editProdId').value);
     const index = products.findIndex(p => p.id === id);
@@ -330,7 +330,7 @@ window.saveProductEdits = async function() {
     window.filterCategory('todos');
     alert("Produto atualizado com sucesso!");
 
-    if(productsRef) {
+    if (productsRef) {
         try {
             await setDoc(doc(productsRef, id.toString()), updatedProd);
         } catch (error) {
@@ -340,14 +340,14 @@ window.saveProductEdits = async function() {
     }
 }
 
-window.deleteProduct = async function(id) {
-    if(!isAdmin) return alert("Você precisa estar logado para excluir.");
+window.deleteProduct = async function (id) {
+    if (!isAdmin) return alert("Você precisa estar logado para excluir.");
 
-    if(confirm("ATENÇÃO: Tem certeza que deseja excluir este produto?")) {
+    if (confirm("ATENÇÃO: Tem certeza que deseja excluir este produto?")) {
         products = products.filter(p => p.id !== id);
         window.filterCategory('todos');
 
-        if(productsRef) {
+        if (productsRef) {
             try {
                 await deleteDoc(doc(productsRef, id.toString()));
             } catch (error) {
@@ -357,10 +357,10 @@ window.deleteProduct = async function(id) {
     }
 }
 
-window.filterCategory = function(category) {
+window.filterCategory = function (category) {
     const buttons = document.querySelectorAll('.tab-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
-    
+
     const categoryText = category.replace(/-/g, ' ');
     const activeBtn = Array.from(buttons).find(
         btn => btn.textContent.toLowerCase().includes(categoryText) || (category === 'todos' && btn.textContent.toLowerCase().includes('todos'))
@@ -371,15 +371,15 @@ window.filterCategory = function(category) {
     else renderProducts(products.filter(p => p.category === category));
 }
 
-window.openQuickView = function(id) {
+window.openQuickView = function (id) {
     const product = products.find(p => p.id === id);
     if (!product) return;
 
     window.selectedModalQuantity = 1;
     const sizesArray = product.sizes ? product.sizes.split(',').map(s => s.trim()) : ['Único'];
     window.selectedSize = sizesArray[0];
-    
-    let sizesHtml = sizesArray.map(size => 
+
+    let sizesHtml = sizesArray.map(size =>
         `<button class="size-btn ${window.selectedSize === size ? 'selected' : ''}" onclick="window.selectSize(this, '${size}')">${size}</button>`
     ).join('');
 
@@ -422,14 +422,14 @@ window.openQuickView = function(id) {
     overlay.classList.add('active');
 }
 
-window.selectSize = function(buttonElement, size) {
+window.selectSize = function (buttonElement, size) {
     window.selectedSize = size;
     const buttons = document.querySelectorAll('.size-btn');
     buttons.forEach(b => b.classList.remove('selected'));
     buttonElement.classList.add('selected');
 }
 
-window.changeModalQuantity = function(delta, maxStock) {
+window.changeModalQuantity = function (delta, maxStock) {
     window.selectedModalQuantity += delta;
     if (window.selectedModalQuantity < 1) window.selectedModalQuantity = 1;
     if (window.selectedModalQuantity > maxStock) {
@@ -439,26 +439,26 @@ window.changeModalQuantity = function(delta, maxStock) {
     document.getElementById('modalQtyVal').textContent = window.selectedModalQuantity;
 }
 
-window.addToCart = function(productId, size = 'M', quantity = 1) {
+window.addToCart = function (productId, size = 'M', quantity = 1) {
     const product = products.find(p => p.id === productId);
     if (!product || product.stock < 1) return;
 
     const existingItem = cart.find(item => item.id === productId && item.size === size);
 
     if (existingItem) {
-        if(existingItem.quantity + quantity > product.stock) {
+        if (existingItem.quantity + quantity > product.stock) {
             alert(`Você não pode adicionar mais que ${product.stock} unidades.`);
             return;
         }
         existingItem.quantity += quantity;
     } else {
-        if(quantity > product.stock) return;
+        if (quantity > product.stock) return;
         cart.push({ ...product, size: size, quantity: quantity });
     }
     window.updateCartUI();
 }
 
-window.updateCartQuantity = function(index, delta) {
+window.updateCartQuantity = function (index, delta) {
     if (!cart[index]) return;
     const product = products.find(p => p.id === cart[index].id);
     const newQty = cart[index].quantity + delta;
@@ -473,12 +473,12 @@ window.updateCartQuantity = function(index, delta) {
     window.updateCartUI();
 }
 
-window.removeFromCart = function(index) {
+window.removeFromCart = function (index) {
     cart.splice(index, 1);
     window.updateCartUI();
 }
 
-window.updateCartUI = function() {
+window.updateCartUI = function () {
     const cartContainer = document.getElementById('cartItemsContainer');
     const cartTotal = document.getElementById('cartTotal');
     const cartCount = document.getElementById('cartCount');
@@ -526,7 +526,7 @@ window.updateCartUI = function() {
     cartTotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
 }
 
-window.checkoutWhatsApp = function() {
+window.checkoutWhatsApp = function () {
     if (cart.length === 0) {
         alert("Adicione pelo menos um produto ao seu carrinho.");
         return;

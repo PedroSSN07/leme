@@ -1129,17 +1129,17 @@ body {
 }
 
 @media (max-width: 768px) {
-   .hero {
-        height: 65vh; 
+    .hero {
+        height: 65vh;
         min-height: 350px;
     }
-    
+
     .hero-content h1 {
-        font-size: 2.2rem; 
+        font-size: 2.2rem;
     }
 
     .hero-content p {
-        font-size: 0.95rem; 
+        font-size: 0.95rem;
     }
 
     .modal-grid {
