@@ -44,7 +44,6 @@ body {
     margin: 0 auto;
 }
 
-/*  BARRA SUPERIOR  */
 .top-bar {
     background: var(--gold-gradient);
     color: #1a1a1a;
@@ -55,7 +54,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/*  HEADER / NAVBAR & BRAND LOGO  */
 .navbar {
     position: sticky;
     top: 0;
@@ -214,7 +212,6 @@ body {
     }
 }
 
-/*  SIDEBAR MENU  */
 .sidebar-menu {
     position: fixed;
     top: 0;
@@ -339,7 +336,6 @@ body {
     visibility: visible;
 }
 
-/*  HERO / BANNER PRINCIPAL (VÍDEO DE FUNDO)  */
 .hero {
     position: relative;
     height: 80vh;
@@ -427,7 +423,6 @@ body {
     box-shadow: var(--shadow-hover);
 }
 
-/*  SEÇÃO DO CATÁLOGO  */
 .catalog-section {
     padding: 70px 0;
     background: var(--bg-soft);
@@ -625,7 +620,6 @@ body {
     border-color: transparent;
 }
 
-/*  MODAL DE VISUALIZAÇÃO RÁPIDA  */
 .modal-product {
     position: fixed;
     top: 0;
@@ -790,7 +784,6 @@ body {
     color: var(--text-dark);
 }
 
-/*  CARRINHO LATERAL  */
 .cart-drawer {
     position: fixed;
     top: 0;
@@ -966,7 +959,6 @@ body {
     transform: translateY(-2px);
 }
 
-/*  RODAPÉ  */
 .footer {
     background: #181818;
     color: #eeeeee;
@@ -1066,7 +1058,6 @@ body {
 
 .btn-edit-product {
     background: #4a90e2;
-    /* Azul para editar */
     color: white;
     border: none;
     padding: 6px 12px;
@@ -1079,7 +1070,6 @@ body {
 
 .btn-delete-product {
     background: #c94a4a;
-    /* Vermelho para excluir */
     color: white;
     border: none;
     padding: 6px 10px;

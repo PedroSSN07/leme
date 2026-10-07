@@ -1,9 +1,7 @@
-// Importações completas corretas via CDN oficial do Google (Firestore + Autenticação)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
-// Suas chaves reais do Firebase configuradas
 const firebaseConfig = {
     apiKey: "AIzaSyCzSpkYnbenWySywpL7UWaR2XG6fmtPE0M",
     authDomain: "leme-catalogo.firebaseapp.com",
@@ -33,7 +31,6 @@ const defaultProducts = [
 let products = [];
 let cart = [];
 let isAdmin = false;
-// SENHA REMOVIDA DAQUI - SEGURANÇA TOTAL!
 
 window.selectedSize = 'M';
 window.selectedModalQuantity = 1;
@@ -104,7 +101,7 @@ function setupEventListeners() {
 
     document.getElementById('adminLoginBtn').addEventListener('click', () => {
         if(isAdmin) {
-            signOut(auth); // Desloga com segurança do servidor do Google
+            signOut(auth);
             isAdmin = false;
             adminPanel.style.display = 'none';
             alert("Modo Admin desativado.");
@@ -152,7 +149,6 @@ window.handleUrlInput = function(urlValue, fileInputId, hiddenInputId, previewIm
     }
 }
 
-// ====== LOGIN SEGURO VIA FIREBASE AUTH ======
 window.verifyAdmin = async function() {
     const email = document.getElementById('adminEmail').value;
     const pass = document.getElementById('adminPassword').value;
