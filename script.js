@@ -1,14 +1,18 @@
+// Importações completas corretas via CDN oficial do Google
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-import { initializeApp } from "firebase/app";
-
+// Suas chaves reais do Firebase configuradas
 const firebaseConfig = {
-  apiKey: "AIzaSyCzSpkYnbenWySywpL7UWaR2XG6fmtPE0M",
-  authDomain: "leme-catalogo.firebaseapp.com",
-  projectId: "leme-catalogo",
-  storageBucket: "leme-catalogo.firebasestorage.app",
-  messagingSenderId: "392758923254",
-  appId: "1:392758923254:web:bad1bee41384f954df01d7"
-}
+    apiKey: "AIzaSyCzSpkYnbenWySywpL7UWaR2XG6fmtPE0M",
+    authDomain: "leme-catalogo.firebaseapp.com",
+    projectId: "leme-catalogo",
+    storageBucket: "leme-catalogo.firebasestorage.app",
+    messagingSenderId: "392758923254",
+    appId: "1:392758923254:web:bad1bee41384f954df01d7"
+};
+
+let app, db, productsRef;
 
 try {
     app = initializeApp(firebaseConfig);
@@ -16,7 +20,7 @@ try {
     productsRef = collection(db, "produtos");
 } catch (error) {
     console.error("Erro na inicialização do Firebase:", error);
-    alert("ERRO: As chaves do Firebase não estão preenchidas corretamente no topo do arquivo script.js.");
+    alert("ERRO: Falha ao conectar no Firebase. Verifique o console.");
 }
 
 const defaultProducts = [
@@ -29,7 +33,6 @@ let cart = [];
 let isAdmin = false;
 const ADMIN_PASSWORD = "leme2026";
 
-// Tornando as variáveis de seleção globais para o HTML enxergar
 window.selectedSize = 'M';
 window.selectedModalQuantity = 1;
 
@@ -55,9 +58,7 @@ async function loadProducts() {
         renderProducts(products);
         
     } catch (error) {
-        console.error("Erro ao puxar dados:", error);
-        alert("Aviso: O banco de dados está vazio ou com erro de permissão. Exibindo produtos locais temporariamente.");
-        // Se der erro na nuvem, mostra os locais para não quebrar o site
+        console.error("Erro ao puxar dados da nuvem:", error);
         products = [...defaultProducts];
         renderProducts(products);
     }
@@ -78,7 +79,6 @@ const editProductModal = document.getElementById('editProductModal');
 const addProductModal = document.getElementById('addProductModal');
 const adminPanel = document.getElementById('adminPanel');
 
-// ------ FUNÇÕES DE JANELAS (Globais) ------
 window.openSidebar = function() { window.closeAllDrawers(); sidebarMenu.classList.add('active'); overlay.classList.add('active'); }
 window.openCart = function() { window.closeAllDrawers(); cartDrawer.classList.add('active'); overlay.classList.add('active'); }
 window.closeModal = function() { productModal.classList.remove('active'); overlay.classList.remove('active'); }
@@ -116,7 +116,6 @@ function setupEventListeners() {
     document.getElementById('closeAddModalBtn').addEventListener('click', window.closeAllDrawers);
 }
 
-// ------ PROCESSADOR DE IMAGENS ------
 window.processImage = function(inputElement, hiddenInputId, previewImgId, urlInputId) {
     const file = inputElement.files[0];
     if (file) {
@@ -150,7 +149,6 @@ window.handleUrlInput = function(urlValue, fileInputId, hiddenInputId, previewIm
     }
 }
 
-// ------ LOGIN ADMIN ------
 window.verifyAdmin = function() {
     const pass = document.getElementById('adminPassword').value;
     if (pass === ADMIN_PASSWORD) {
@@ -209,7 +207,6 @@ function renderProducts(items) {
     });
 }
 
-// ------ ADICIONAR, EDITAR E EXCLUIR PRODUTOS (NUVEM + TELA IMEDIATA) ------
 window.openAddModal = function() {
     document.getElementById('addProdName').value = '';
     document.getElementById('addProdImageUrl').value = '';
@@ -244,13 +241,11 @@ window.saveNewProduct = async function() {
         description: document.getElementById('addProdDesc').value || "Descrição do produto"
     };
 
-    // 1. Atualiza a tela IMEDIATAMENTE (sem esperar o Firebase)
     products.push(newProd);
     window.closeAllDrawers();
     window.filterCategory('todos'); 
     alert("Produto adicionado com sucesso!");
 
-    // 2. Salva na Nuvem no Fundo
     if(productsRef) {
         try {
             await setDoc(doc(productsRef, newProd.id.toString()), newProd);
@@ -308,13 +303,11 @@ window.saveProductEdits = async function() {
         description: document.getElementById('editProdDesc').value
     };
 
-    // 1. Atualiza a tela IMEDIATAMENTE
     products[index] = updatedProd;
     window.closeAllDrawers();
     window.filterCategory('todos');
     alert("Produto atualizado com sucesso!");
 
-    // 2. Salva na Nuvem
     if(productsRef) {
         try {
             await setDoc(doc(productsRef, id.toString()), updatedProd);
@@ -326,11 +319,9 @@ window.saveProductEdits = async function() {
 
 window.deleteProduct = async function(id) {
     if(confirm("ATENÇÃO: Tem certeza que deseja excluir este produto?")) {
-        // 1. Apaga da tela IMEDIATAMENTE
         products = products.filter(p => p.id !== id);
         window.filterCategory('todos');
 
-        // 2. Apaga da Nuvem
         if(productsRef) {
             try {
                 await deleteDoc(doc(productsRef, id.toString()));
@@ -340,8 +331,6 @@ window.deleteProduct = async function(id) {
         }
     }
 }
-
-// ------ FILTRO E CARRINHO ------
 
 window.filterCategory = function(category) {
     const buttons = document.querySelectorAll('.tab-btn');
