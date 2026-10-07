@@ -22,7 +22,6 @@
 
     <header class="navbar">
         <div class="nav-container">
-
             <button class="menu-btn" id="openNavBtn" aria-label="Abrir Menu">
                 <i class="fa-solid fa-bars"></i>
                 <span>Menu</span>
@@ -36,6 +35,10 @@
             </a>
 
             <div class="nav-actions">
+                <button class="icon-link admin-btn" id="adminLoginBtn" title="Acesso Restrito"
+                    style="background:none; border:none; cursor:pointer;">
+                    <i class="fa-solid fa-lock"></i>
+                </button>
                 <a href="https://www.instagram.com/use.leme" target="_blank" class="icon-link"
                     title="Siga no Instagram @use.leme">
                     <i class="fa-brands fa-instagram"></i>
@@ -45,7 +48,6 @@
                     <span class="cart-count" id="cartCount">0</span>
                 </button>
             </div>
-
         </div>
     </header>
 
@@ -96,8 +98,8 @@
     <div class="overlay" id="overlay"></div>
 
     <section class="hero" id="hero">
-        <img src="./assets/Madeira_girando_com_sombra_20261005215634.gif" alt="Hero Image" class="hero-video-bg">
-
+        <img src="./assets/Madeira_girando_com_sombra_20261005215634.gif"
+            alt="Hero Image" class="hero-video-bg">
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <span class="sub-title">Nossas Coleções</span>
@@ -109,7 +111,6 @@
 
     <main class="catalog-section" id="catalogo">
         <div class="container">
-
             <div class="section-header">
                 <h2>Nosso Catálogo</h2>
                 <div class="gold-line"></div>
@@ -125,6 +126,11 @@
                 <button class="tab-btn" onclick="filterCategory('oversized')">Oversized</button>
             </div>
 
+            <div id="adminPanel" style="display: none; text-align: center; margin-bottom: 30px;">
+                <button class="btn-gold" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> Adicionar Novo
+                    Produto</button>
+            </div>
+
             <div class="products-grid" id="productsGrid"></div>
         </div>
     </main>
@@ -136,14 +142,179 @@
         </div>
     </div>
 
+    <div class="modal-product" id="adminLoginModal">
+        <div class="modal-content admin-form-content" style="max-width: 400px; padding: 30px;">
+            <button class="close-modal" id="closeAdminLoginBtn">&times;</button>
+            <h2 style="margin-bottom: 20px; font-family: var(--font-heading);"><i class="fa-solid fa-lock"></i> Acesso
+                Admin</h2>
+            <p style="font-size: 0.9rem; margin-bottom: 15px;">Digite a senha para habilitar a edição do catálogo.</p>
+            <input type="password" id="adminPassword" class="admin-input" placeholder="Senha de acesso">
+            <button class="btn-gold" style="width: 100%; justify-content: center; margin-top: 15px;"
+                onclick="verifyAdmin()">Entrar</button>
+            <p id="adminErrorMsg" style="color: red; font-size: 0.8rem; margin-top: 10px; display: none;">Senha
+                incorreta.</p>
+        </div>
+    </div>
+
+    <div class="modal-product" id="editProductModal">
+        <div class="modal-content admin-form-content" style="max-width: 600px; padding: 30px;">
+            <button class="close-modal" id="closeEditModalBtn">&times;</button>
+            <h2 style="margin-bottom: 20px; font-family: var(--font-heading);"><i class="fa-solid fa-pen-to-square"></i>
+                Editar Produto</h2>
+            <input type="hidden" id="editProdId">
+
+            <div class="form-group">
+                <label>Nome do Produto</label>
+                <input type="text" id="editProdName" class="admin-input">
+            </div>
+
+            <div class="form-group"
+                style="background: var(--bg-soft); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <label>Imagem do Produto</label>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Envie uma foto do
+                    dispositivo OU cole um link:</p>
+
+                <input type="file" id="editProdImageFile" class="admin-input" accept="image/png, image/jpeg, image/webp"
+                    onchange="processImage(this, 'editProdImageBase64', 'editProdImagePreview', 'editProdImageUrl')"
+                    style="margin-bottom: 5px;">
+
+                <div
+                    style="text-align: center; margin: 8px 0; font-size: 0.85rem; font-weight: bold; color: var(--gold-dark);">
+                    OU</div>
+
+                <input type="text" id="editProdImageUrl" class="admin-input"
+                    placeholder="Cole o link (URL) da imagem aqui"
+                    oninput="updatePreviewFromUrl(this.value, 'editProdImageBase64', 'editProdImageFile', 'editProdImagePreview')">
+                <input type="hidden" id="editProdImageBase64">
+
+                <div style="text-align: center;">
+                    <img id="editProdImagePreview" src=""
+                        style="width: 120px; height: 120px; object-fit: cover; margin-top: 10px; border-radius: 8px; border: 2px solid var(--gold-primary); display: none; margin-left: auto; margin-right: auto;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="editProdCategory" class="admin-input">
+                        <option value="t-shirts-basicas">T-Shirts Básicas</option>
+                        <option value="religiosas">Religiosas</option>
+                        <option value="personalizadas">Personalizadas</option>
+                        <option value="camisas-masculinas">Camisas Masculinas</option>
+                        <option value="oversized">Oversized</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Etiqueta (Badge)</label>
+                    <input type="text" id="editProdBadge" class="admin-input" placeholder="Ex: Mais Vendido">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Preço (R$)</label>
+                    <input type="number" step="0.01" id="editProdPrice" class="admin-input">
+                </div>
+                <div class="form-group">
+                    <label>Quantidade em Estoque</label>
+                    <input type="number" id="editProdStock" class="admin-input">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Tamanhos (separados por vírgula. Ex: P, M, G)</label>
+                <input type="text" id="editProdSizes" class="admin-input">
+            </div>
+            <div class="form-group">
+                <label>Descrição</label>
+                <textarea id="editProdDesc" class="admin-input" rows="3"></textarea>
+            </div>
+            <button class="btn-gold" style="width: 100%; justify-content: center; margin-top: 10px;"
+                onclick="saveProductEdits()">Salvar Alterações</button>
+        </div>
+    </div>
+
+    <div class="modal-product" id="addProductModal">
+        <div class="modal-content admin-form-content" style="max-width: 600px; padding: 30px;">
+            <button class="close-modal" id="closeAddModalBtn">&times;</button>
+            <h2 style="margin-bottom: 20px; font-family: var(--font-heading);"><i class="fa-solid fa-plus"></i> Novo
+                Produto</h2>
+
+            <div class="form-group">
+                <label>Nome do Produto</label>
+                <input type="text" id="addProdName" class="admin-input" placeholder="Ex: T-Shirt Elegance">
+            </div>
+
+            <div class="form-group"
+                style="background: var(--bg-soft); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <label>Imagem do Produto</label>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Envie uma foto do
+                    dispositivo OU cole um link:</p>
+
+                <input type="file" id="addProdImageFile" class="admin-input" accept="image/png, image/jpeg, image/webp"
+                    onchange="processImage(this, 'addProdImageBase64', 'addProdImagePreview', 'addProdImageUrl')"
+                    style="margin-bottom: 5px;">
+
+                <div
+                    style="text-align: center; margin: 8px 0; font-size: 0.85rem; font-weight: bold; color: var(--gold-dark);">
+                    OU</div>
+
+                <input type="text" id="addProdImageUrl" class="admin-input"
+                    placeholder="Cole o link (URL) da imagem aqui"
+                    oninput="updatePreviewFromUrl(this.value, 'addProdImageBase64', 'addProdImageFile', 'addProdImagePreview')">
+                <input type="hidden" id="addProdImageBase64">
+
+                <div style="text-align: center;">
+                    <img id="addProdImagePreview" src=""
+                        style="width: 120px; height: 120px; object-fit: cover; margin-top: 10px; border-radius: 8px; border: 2px solid var(--gold-primary); display: none; margin-left: auto; margin-right: auto;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="addProdCategory" class="admin-input">
+                        <option value="t-shirts-basicas">T-Shirts Básicas</option>
+                        <option value="religiosas">Religiosas</option>
+                        <option value="personalizadas">Personalizadas</option>
+                        <option value="camisas-masculinas">Camisas Masculinas</option>
+                        <option value="oversized">Oversized</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Etiqueta (Badge)</label>
+                    <input type="text" id="addProdBadge" class="admin-input" placeholder="Ex: Lançamento">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Preço (R$)</label>
+                    <input type="number" step="0.01" id="addProdPrice" class="admin-input" placeholder="Ex: 89.90">
+                </div>
+                <div class="form-group">
+                    <label>Quantidade em Estoque</label>
+                    <input type="number" id="addProdStock" class="admin-input" placeholder="Ex: 10">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Tamanhos (separados por vírgula. Ex: P, M, G)</label>
+                <input type="text" id="addProdSizes" class="admin-input" placeholder="Ex: P, M, G, GG">
+            </div>
+            <div class="form-group">
+                <label>Descrição</label>
+                <textarea id="addProdDesc" class="admin-input" rows="3"
+                    placeholder="Fale um pouco sobre o produto..."></textarea>
+            </div>
+            <button class="btn-gold"
+                style="width: 100%; justify-content: center; margin-top: 10px; background: #20ba5a; color: white;"
+                onclick="saveNewProduct()">Criar Produto</button>
+        </div>
+    </div>
+
     <div class="cart-drawer" id="cartDrawer">
         <div class="cart-header">
             <h3><i class="fa-solid fa-bag-shopping"></i> Seu Carrinho Leme</h3>
             <button class="close-btn" id="closeCartBtn">&times;</button>
         </div>
-
         <div class="cart-items" id="cartItemsContainer"></div>
-
         <div class="cart-footer">
             <div class="cart-total-row">
                 <span>Subtotal:</span>
@@ -159,7 +330,6 @@
 
     <footer class="footer">
         <div class="container footer-grid">
-
             <div class="footer-col brand-col">
                 <div class="brand-logo footer-brand">
                     <i class="fa-solid fa-dharmachakra logo-icon"></i>
@@ -171,7 +341,7 @@
                 <div class="social-links">
                     <a href="https://www.instagram.com/use.leme" target="_blank" aria-label="Instagram"><i
                             class="fa-brands fa-instagram"></i></a>
-                    <a href="https://wa.me/5588996645739" target="_blank" aria-label="WhatsApp"><i
+                    <a href="https://wa.me/5585997560937" target="_blank" aria-label="WhatsApp"><i
                             class="fa-brands fa-whatsapp"></i></a>
                 </div>
             </div>
@@ -191,7 +361,6 @@
                 <p><i class="fa-solid fa-envelope"></i> contato@useleme.com.br</p>
                 <p><i class="fa-solid fa-location-dot"></i> Envio Seguro para Rio Grande do Norte</p>
             </div>
-
         </div>
 
         <div class="footer-bottom">
@@ -200,6 +369,7 @@
     </footer>
 
     <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>

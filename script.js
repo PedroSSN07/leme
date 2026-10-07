@@ -1,67 +1,71 @@
-/*  BANCO DE DADOS DE PRODUTOS DA LEME  */
-const products = [
-    {
-        id: 1,
-        name: "T-Shirts Básicas Leme",
-        category: "t-shirts-basicas",
-        price: 9.99,
-        badge: "Mais Vendido",
-        image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
-        description: "Descrição T-Shirts Básicas Leme."
-    },
-    {
-        id: 2,
-        name: "Religiosas Leme",
-        category: "religiosas",
-        price: 9.99,
-        badge: "Lançamento",
-        image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800&auto=format&fit=crop",
-        description: "Descrição Religiosas Leme."
-    },
-    {
-        id: 3,
-        name: "Personalizadas Leme",
-        category: "personalizadas",
-        price: 9.90,
-        badge: "Exclusivo",
-        image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop",
-        description: "Descrição Personalizadas Leme."
-    },
-    {
-        id: 4,
-        name: "Camisas Masculinas Leme",
-        category: "camisas-masculinas",
-        price: 9.99,
-        badge: "Tendência",
-        image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=800&auto=format&fit=crop",
-        description: "Descrição Camisas Masculinas Leme."
-    },
-    {
-        id: 5,
-        name: "Oversized Leme",
-        category: "oversized",
-        price: 9.99,
-        badge: "Coleção Ouro",
-        image: "https://images.unsplash.com/photo-1554568218-0f1715e72254?q=80&w=800&auto=format&fit=crop",
-        description: "Descrição Oversized Leme."
-    },
-    {
-        id: 6,
-        name: "T-Shirts Básicas Premium",
-        category: "t-shirts-basicas",
-        price: 9.99,
-        badge: "Novo",
-        image: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=800&auto=format&fit=crop",
-        description: "Descrição T-Shirts Básicas Premium."
-    }
+// Importando o Firebase diretamente via CDN (Nuvem)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+// =========================================================
+// ⚠️ COLE AS CHAVES DO SEU FIREBASE AQUI EMBAIXO ⚠️
+// =========================================================
+const firebaseConfig = {
+    apiKey: "Sua_API_Key_Aqui",
+    authDomain: "seu-projeto.firebaseapp.com",
+    projectId: "seu-projeto",
+    storageBucket: "seu-projeto.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+};
+
+// Inicializando o Banco de Dados
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const productsRef = collection(db, "produtos"); // Nome da nossa "tabela"
+
+/* PRODUTOS PADRÃO (Caso o banco de dados esteja vazio no primeiro uso) */
+const defaultProducts = [
+    { id: 1, name: "T-Shirts Básicas Leme", category: "t-shirts-basicas", price: 69.99, stock: 15, sizes: "P, M, G", badge: "Mais Vendido", image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800", description: "Descrição T-Shirts Básicas Leme." },
+    { id: 2, name: "Religiosas Leme", category: "religiosas", price: 89.90, stock: 10, sizes: "P, M, G, GG", badge: "Lançamento", image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800", description: "Descrição Religiosas Leme." }
 ];
 
+let products = [];
 let cart = [];
 let selectedSize = 'M';
 let selectedModalQuantity = 1;
+let isAdmin = false;
+const ADMIN_PASSWORD = "leme2026";
+
+// ---------------- FUNÇÕES DE BANCO DE DADOS (NUVEM) ---------------- //
+
+// Puxa os dados da Nuvem
+async function loadProducts() {
+    try {
+        const querySnapshot = await getDocs(productsRef);
+        
+        if (querySnapshot.empty) {
+            // Se o banco estiver vazio, ele salva os produtos padrão lá
+            products = [...defaultProducts];
+            for (let p of products) {
+                await setDoc(doc(productsRef, p.id.toString()), p);
+            }
+        } else {
+            products = [];
+            querySnapshot.forEach((doc) => {
+                products.push(doc.data());
+            });
+        }
+        
+        // Organiza pelo ID
+        products.sort((a, b) => a.id - b.id);
+        renderProducts(products);
+        
+    } catch (error) {
+        console.error("Erro ao conectar no banco:", error);
+        alert("Erro ao conectar no banco de dados. Você colocou as chaves certas?");
+    }
+}
+
+// ------------------------------------------------------------------ //
 
 document.addEventListener('DOMContentLoaded', () => {
-    renderProducts(products);
+    loadProducts(); // Carrega da nuvem ao abrir o site
     setupEventListeners();
 });
 
@@ -70,93 +74,299 @@ const sidebarMenu = document.getElementById('sidebarMenu');
 const cartDrawer = document.getElementById('cartDrawer');
 const overlay = document.getElementById('overlay');
 const productModal = document.getElementById('productModal');
+const adminLoginModal = document.getElementById('adminLoginModal');
+const editProductModal = document.getElementById('editProductModal');
+const addProductModal = document.getElementById('addProductModal');
+const adminPanel = document.getElementById('adminPanel');
 
 function setupEventListeners() {
     document.getElementById('openNavBtn').addEventListener('click', openSidebar);
     document.getElementById('closeNavBtn').addEventListener('click', closeAllDrawers);
-
     document.getElementById('openCartBtn').addEventListener('click', openCart);
     document.getElementById('closeCartBtn').addEventListener('click', closeAllDrawers);
-
-    overlay.addEventListener('click', closeAllDrawers);
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeAllDrawers);
+
+    document.getElementById('adminLoginBtn').addEventListener('click', () => {
+        if(isAdmin) {
+            isAdmin = false;
+            adminPanel.style.display = 'none';
+            alert("Modo Admin desativado.");
+            renderProducts(products);
+        } else {
+            adminLoginModal.classList.add('active');
+            overlay.classList.add('active');
+        }
+    });
+    document.getElementById('closeAdminLoginBtn').addEventListener('click', closeAllDrawers);
+    document.getElementById('closeEditModalBtn').addEventListener('click', closeAllDrawers);
+    document.getElementById('closeAddModalBtn').addEventListener('click', closeAllDrawers);
+}
+
+// Imagens
+window.processImage = function(inputElement, hiddenInputId, previewImgId, urlInputId) {
+    const file = inputElement.files[0];
+    if (file) {
+        // Limite de segurança para o Firestore (Base64 não pode ser gigantesco)
+        if (file.size > 800000) { // 800kb
+            alert("A imagem é muito pesada para o banco de dados atual. Escolha uma foto menor que 800kb ou use um link de URL.");
+            inputElement.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64String = e.target.result;
+            document.getElementById(hiddenInputId).value = base64String; 
+            const previewImg = document.getElementById(previewImgId);
+            previewImg.src = base64String;
+            previewImg.style.display = 'inline-block';
+            if(urlInputId) document.getElementById(urlInputId).value = ''; 
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+window.handleUrlInput = function(urlValue, fileInputId, hiddenInputId, previewImgId) {
+    document.getElementById(fileInputId).value = '';
+    document.getElementById(hiddenInputId).value = '';
+    const previewImg = document.getElementById(previewImgId);
+    if (urlValue.trim() !== '') {
+        previewImg.src = urlValue; 
+        previewImg.style.display = 'inline-block';
+    } else {
+        previewImg.style.display = 'none';
+    }
+}
+
+window.verifyAdmin = function() {
+    const pass = document.getElementById('adminPassword').value;
+    if (pass === ADMIN_PASSWORD) {
+        isAdmin = true;
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminErrorMsg').style.display = 'none';
+        adminPanel.style.display = 'block';
+        alert("Acesso liberado! Banco de dados conectado.");
+        closeAllDrawers();
+        renderProducts(products);
+    } else {
+        document.getElementById('adminErrorMsg').style.display = 'block';
+    }
 }
 
 function renderProducts(items) {
     productsGrid.innerHTML = '';
-
     if (items.length === 0) {
-        productsGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">Nenhum produto encontrado nesta categoria.</p>`;
+        productsGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center;">Nenhum produto encontrado.</p>`;
         return;
     }
 
     items.forEach(product => {
         const card = document.createElement('div');
         card.className = 'product-card';
+        
+        let btnCartHtml = product.stock > 0 
+            ? `<button class="btn-add-cart" onclick="openQuickView(${product.id})"><i class="fa-solid fa-bag-shopping"></i> Comprar</button>`
+            : `<button class="btn-add-cart" style="opacity: 0.5; cursor: not-allowed;"><i class="fa-solid fa-ban"></i> Esgotado</button>`;
+        
+        if (product.stock === 0) product.badge = "Esgotado";
+
+        const adminControlsHtml = isAdmin ? `
+            <div class="admin-card-controls">
+                <button class="btn-edit-product" onclick="openEditModal(${product.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-delete-product" onclick="deleteProduct(${product.id})" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+        ` : '';
+
         card.innerHTML = `
-      <span class="product-badge">${product.badge}</span>
-      <div class="product-image">
-        <img src="${product.image}" alt="${product.name}">
-        <button class="quick-view-btn" onclick="openQuickView(${product.id})">
-          <i class="fa-solid fa-eye"></i> Ver Peça
-        </button>
-      </div>
-      <div class="product-info">
-        <span class="product-category">${product.category}</span>
-        <h3 class="product-title">${product.name}</h3>
-        <div class="product-price">R$ ${product.price.toFixed(2).replace('.', ',')}</div>
-        <button class="btn-add-cart" onclick="addToCart(${product.id}, 'M', 1)">
-          <i class="fa-solid fa-bag-shopping"></i> Adicionar ao Carrinho
-        </button>
-      </div>
-    `;
+            ${adminControlsHtml}
+            <span class="product-badge">${product.badge}</span>
+            <div class="product-image">
+                <img src="${product.image}" alt="${product.name}">
+                <button class="quick-view-btn" onclick="openQuickView(${product.id})"><i class="fa-solid fa-eye"></i> Ver Peça</button>
+            </div>
+            <div class="product-info">
+                <span class="product-category">${product.category.replace('-', ' ')}</span>
+                <h3 class="product-title">${product.name}</h3>
+                <div class="product-price">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</div>
+                ${isAdmin ? `<p class="stock-badge">Estoque: ${product.stock} un.</p>` : ''}
+                ${btnCartHtml}
+            </div>
+        `;
         productsGrid.appendChild(card);
     });
 }
 
-function filterCategory(category) {
+// ------ ADMIN SALVANDO NA NUVEM ------
+
+window.openAddModal = function() {
+    document.getElementById('addProdName').value = '';
+    document.getElementById('addProdImageUrl').value = '';
+    document.getElementById('addProdImageFile').value = '';
+    document.getElementById('addProdImageBase64').value = '';
+    document.getElementById('addProdImagePreview').style.display = 'none';
+    document.getElementById('addProdCategory').value = 't-shirts-basicas';
+    document.getElementById('addProdBadge').value = 'Novo';
+    document.getElementById('addProdPrice').value = '';
+    document.getElementById('addProdStock').value = '';
+    document.getElementById('addProdSizes').value = 'P, M, G';
+    document.getElementById('addProdDesc').value = '';
+    addProductModal.classList.add('active');
+    overlay.classList.add('active');
+}
+
+window.saveNewProduct = async function() {
+    const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+    const base64Img = document.getElementById('addProdImageBase64').value;
+    const urlImg = document.getElementById('addProdImageUrl').value;
+    const finalImage = base64Img || urlImg || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800";
+
+    const newProd = {
+        id: newId,
+        name: document.getElementById('addProdName').value || "Novo Produto",
+        image: finalImage,
+        category: document.getElementById('addProdCategory').value,
+        badge: document.getElementById('addProdBadge').value || "Novo",
+        price: parseFloat(document.getElementById('addProdPrice').value) || 0,
+        stock: parseInt(document.getElementById('addProdStock').value) || 0,
+        sizes: document.getElementById('addProdSizes').value || "Único",
+        description: document.getElementById('addProdDesc').value || "Descrição do produto"
+    };
+
+    try {
+        // Salva na Nuvem (Firebase)
+        await setDoc(doc(productsRef, newProd.id.toString()), newProd);
+        
+        products.push(newProd);
+        closeAllDrawers();
+        filterCategory('todos'); 
+        alert("Produto adicionado com sucesso no Banco de Dados!");
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao salvar no banco de dados.");
+    }
+}
+
+window.openEditModal = function(id) {
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+
+    document.getElementById('editProdId').value = product.id;
+    document.getElementById('editProdName').value = product.name;
+    
+    const isBase64 = product.image.startsWith('data:image');
+    document.getElementById('editProdImageUrl').value = isBase64 ? '' : product.image;
+    document.getElementById('editProdImageBase64').value = isBase64 ? product.image : '';
+    document.getElementById('editProdImageFile').value = ''; 
+    
+    const previewImg = document.getElementById('editProdImagePreview');
+    previewImg.src = product.image;
+    previewImg.style.display = 'inline-block';
+
+    document.getElementById('editProdCategory').value = product.category;
+    document.getElementById('editProdBadge').value = product.badge;
+    document.getElementById('editProdPrice').value = product.price;
+    document.getElementById('editProdStock').value = product.stock;
+    document.getElementById('editProdSizes').value = product.sizes || "";
+    document.getElementById('editProdDesc').value = product.description;
+
+    editProductModal.classList.add('active');
+    overlay.classList.add('active');
+}
+
+window.saveProductEdits = async function() {
+    const id = parseInt(document.getElementById('editProdId').value);
+    const index = products.findIndex(p => p.id === id);
+    if (index === -1) return;
+
+    const base64Img = document.getElementById('editProdImageBase64').value;
+    const urlImg = document.getElementById('editProdImageUrl').value;
+    const finalImage = base64Img || urlImg || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800";
+
+    const updatedProd = {
+        id: id,
+        name: document.getElementById('editProdName').value,
+        image: finalImage,
+        category: document.getElementById('editProdCategory').value,
+        badge: document.getElementById('editProdBadge').value,
+        price: parseFloat(document.getElementById('editProdPrice').value),
+        stock: parseInt(document.getElementById('editProdStock').value),
+        sizes: document.getElementById('editProdSizes').value,
+        description: document.getElementById('editProdDesc').value
+    };
+
+    try {
+        // Atualiza na Nuvem (Firebase)
+        await setDoc(doc(productsRef, id.toString()), updatedProd);
+        
+        products[index] = updatedProd;
+        closeAllDrawers();
+        renderProducts(products);
+        alert("Produto atualizado na Nuvem com sucesso!");
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro ao atualizar o banco de dados.");
+    }
+}
+
+window.deleteProduct = async function(id) {
+    if(confirm("ATENÇÃO: Tem certeza que deseja excluir este produto do banco de dados?")) {
+        try {
+            // Deleta da Nuvem (Firebase)
+            await deleteDoc(doc(productsRef, id.toString()));
+            
+            products = products.filter(p => p.id !== id);
+            renderProducts(products);
+            alert("Produto excluído!");
+        } catch (error) {
+            console.error("Erro:", error);
+            alert("Erro ao excluir do banco de dados.");
+        }
+    }
+}
+
+// ------ FIM DO SISTEMA DE ADMIN ------
+
+window.filterCategory = function(category) {
     const buttons = document.querySelectorAll('.tab-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
-
     const activeBtn = Array.from(buttons).find(
         btn => btn.textContent.toLowerCase().includes(category) || (category === 'todos' && btn.textContent === 'Todos')
     );
     if (activeBtn) activeBtn.classList.add('active');
 
-    if (category === 'todos') {
-        renderProducts(products);
-    } else {
-        const filtered = products.filter(p => p.category === category);
-        renderProducts(filtered);
-    }
-
+    if (category === 'todos') renderProducts(products);
+    else renderProducts(products.filter(p => p.category === category));
+    
     closeAllDrawers();
 }
 
-function openSidebar() {
-    closeAllDrawers();
-    sidebarMenu.classList.add('active');
-    overlay.classList.add('active');
-}
-
-function openCart() {
-    closeAllDrawers();
-    cartDrawer.classList.add('active');
-    overlay.classList.add('active');
-}
+function openSidebar() { closeAllDrawers(); sidebarMenu.classList.add('active'); overlay.classList.add('active'); }
+function openCart() { closeAllDrawers(); cartDrawer.classList.add('active'); overlay.classList.add('active'); }
 
 function closeAllDrawers() {
     sidebarMenu.classList.remove('active');
     cartDrawer.classList.remove('active');
+    productModal.classList.remove('active');
+    adminLoginModal.classList.remove('active');
+    editProductModal.classList.remove('active');
+    addProductModal.classList.remove('active');
     overlay.classList.remove('active');
 }
 
-function openQuickView(id) {
+window.openQuickView = function(id) {
     const product = products.find(p => p.id === id);
     if (!product) return;
 
-    selectedSize = 'M';
     selectedModalQuantity = 1;
+    const sizesArray = product.sizes ? product.sizes.split(',').map(s => s.trim()) : ['Único'];
+    selectedSize = sizesArray[0];
+    
+    let sizesHtml = sizesArray.map(size => 
+        `<button class="size-btn ${selectedSize === size ? 'selected' : ''}" onclick="selectSize(this, '${size}')">${size}</button>`
+    ).join('');
+
+    const isAvailable = product.stock > 0;
+    const stockStatus = isAvailable ? `<span class="stock-badge stock-ok">Em estoque (${product.stock} disponíveis)</span>` : `<span class="stock-badge">Esgotado</span>`;
 
     const modalBody = document.getElementById('modalBody');
     modalBody.innerHTML = `
@@ -166,91 +376,92 @@ function openQuickView(id) {
       </div>
       <div class="modal-details">
         <h2>${product.name}</h2>
-        <div class="modal-price">R$ ${product.price.toFixed(2).replace('.', ',')}</div>
+        <div class="modal-price">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</div>
         <p class="modal-description">${product.description}</p>
+        <p style="margin-bottom: 15px;">${stockStatus}</p>
         
         <div class="size-selector">
           <label>Selecione o Tamanho:</label>
-          <div class="size-options">
-            <button class="size-btn ${selectedSize === 'P' ? 'selected' : ''}" onclick="selectSize(this, 'P')">P</button>
-            <button class="size-btn ${selectedSize === 'M' ? 'selected' : ''}" onclick="selectSize(this, 'M')">M</button>
-            <button class="size-btn ${selectedSize === 'G' ? 'selected' : ''}" onclick="selectSize(this, 'G')">G</button>
-            <button class="size-btn ${selectedSize === 'GG' ? 'selected' : ''}" onclick="selectSize(this, 'GG')">GG</button>
-          </div>
+          <div class="size-options">${sizesHtml}</div>
         </div>
 
         <div class="quantity-selector">
           <label>Quantidade:</label>
           <div class="qty-controls">
-            <button class="qty-btn" onclick="changeModalQuantity(-1)"><i class="fa-solid fa-minus"></i></button>
+            <button class="qty-btn" onclick="changeModalQuantity(-1, ${product.stock})"><i class="fa-solid fa-minus"></i></button>
             <span class="qty-val" id="modalQtyVal">1</span>
-            <button class="qty-btn" onclick="changeModalQuantity(1)"><i class="fa-solid fa-plus"></i></button>
+            <button class="qty-btn" onclick="changeModalQuantity(1, ${product.stock})"><i class="fa-solid fa-plus"></i></button>
           </div>
         </div>
 
-        <button class="btn-gold" style="width:100%; justify-content:center;" onclick="addToCart(${product.id}, selectedSize, selectedModalQuantity); closeModal(); openCart();">
-          <i class="fa-solid fa-bag-shopping"></i> Confirmar e Adicionar
+        <button class="btn-gold" style="width:100%; justify-content:center;" ${!isAvailable ? 'disabled style="opacity:0.5;"' : ''} onclick="addToCart(${product.id}, selectedSize, selectedModalQuantity); closeModal(); openCart();">
+          <i class="fa-solid fa-bag-shopping"></i> ${isAvailable ? 'Confirmar e Adicionar' : 'Indisponível'}
         </button>
       </div>
     </div>
   `;
-
     productModal.classList.add('active');
+    overlay.classList.add('active');
 }
 
-function selectSize(buttonElement, size) {
+window.selectSize = function(buttonElement, size) {
     selectedSize = size;
     const buttons = document.querySelectorAll('.size-btn');
     buttons.forEach(b => b.classList.remove('selected'));
     buttonElement.classList.add('selected');
 }
 
-function changeModalQuantity(delta) {
+window.changeModalQuantity = function(delta, maxStock) {
     selectedModalQuantity += delta;
     if (selectedModalQuantity < 1) selectedModalQuantity = 1;
-    const qtyElement = document.getElementById('modalQtyVal');
-    if (qtyElement) {
-        qtyElement.textContent = selectedModalQuantity;
+    if (selectedModalQuantity > maxStock) {
+        selectedModalQuantity = maxStock;
+        alert(`Temos apenas ${maxStock} unidades em estoque.`);
     }
+    document.getElementById('modalQtyVal').textContent = selectedModalQuantity;
 }
 
-function closeModal() {
+window.closeModal = function() {
     productModal.classList.remove('active');
+    overlay.classList.remove('active');
 }
 
-function addToCart(productId, size = 'M', quantity = 1) {
+window.addToCart = function(productId, size = 'M', quantity = 1) {
     const product = products.find(p => p.id === productId);
-    if (!product) return;
+    if (!product || product.stock < 1) return;
 
     const existingItem = cart.find(item => item.id === productId && item.size === size);
 
     if (existingItem) {
+        if(existingItem.quantity + quantity > product.stock) {
+            alert(`Você não pode adicionar mais que ${product.stock} unidades.`);
+            return;
+        }
         existingItem.quantity += quantity;
     } else {
-        cart.push({
-            ...product,
-            size: size,
-            quantity: quantity
-        });
+        if(quantity > product.stock) return;
+        cart.push({ ...product, size: size, quantity: quantity });
     }
-
     updateCartUI();
     openCart();
 }
 
-function updateCartQuantity(index, delta) {
+window.updateCartQuantity = function(index, delta) {
     if (!cart[index]) return;
+    const product = products.find(p => p.id === cart[index].id);
+    const newQty = cart[index].quantity + delta;
 
-    cart[index].quantity += delta;
-
-    if (cart[index].quantity <= 0) {
-        cart.splice(index, 1);
+    if (newQty > product.stock) {
+        alert(`Estoque máximo atingido (${product.stock} disponíveis).`);
+        return;
     }
 
+    cart[index].quantity = newQty;
+    if (cart[index].quantity <= 0) cart.splice(index, 1);
     updateCartUI();
 }
 
-function removeFromCart(index) {
+window.removeFromCart = function(index) {
     cart.splice(index, 1);
     updateCartUI();
 }
@@ -264,16 +475,14 @@ function updateCartUI() {
     void cartCount.offsetWidth;
     cartCount.classList.add('pop');
 
-    const totalQuantity = cart.reduce((acc, item) => acc + item.quantity, 0);
-    cartCount.textContent = totalQuantity;
+    cartCount.textContent = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     if (cart.length === 0) {
         cartContainer.innerHTML = `
       <div style="text-align: center; color: var(--text-muted); padding: 40px 0;">
         <i class="fa-solid fa-bag-shopping" style="font-size: 2.5rem; color: var(--border-color); margin-bottom: 10px;"></i>
         <p>Seu carrinho está vazio.</p>
-      </div>
-    `;
+      </div>`;
         cartTotal.textContent = "R$ 0,00";
         return;
     }
@@ -283,7 +492,6 @@ function updateCartUI() {
 
     cart.forEach((item, index) => {
         subtotal += item.price * item.quantity;
-
         const itemElement = document.createElement('div');
         itemElement.className = 'cart-item';
         itemElement.innerHTML = `
@@ -292,15 +500,13 @@ function updateCartUI() {
         <div class="cart-item-title">${item.name}</div>
         <div class="cart-item-size">Tam: <strong>${item.size}</strong></div>
         <div class="cart-qty-row">
-            <button class="btn-qty-mini" onclick="updateCartQuantity(${index}, -1)" title="Diminuir"><i class="fa-solid fa-minus"></i></button>
+            <button class="btn-qty-mini" onclick="updateCartQuantity(${index}, -1)"><i class="fa-solid fa-minus"></i></button>
             <span class="cart-qty-num">${item.quantity}</span>
-            <button class="btn-qty-mini" onclick="updateCartQuantity(${index}, 1)" title="Aumentar"><i class="fa-solid fa-plus"></i></button>
+            <button class="btn-qty-mini" onclick="updateCartQuantity(${index}, 1)"><i class="fa-solid fa-plus"></i></button>
         </div>
         <div class="cart-item-price">R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</div>
       </div>
-      <button class="cart-item-remove" onclick="removeFromCart(${index})" title="Remover item">
-        <i class="fa-solid fa-trash-can"></i>
-      </button>
+      <button class="cart-item-remove" onclick="removeFromCart(${index})"><i class="fa-solid fa-trash-can"></i></button>
     `;
         cartContainer.appendChild(itemElement);
     });
@@ -308,17 +514,16 @@ function updateCartUI() {
     cartTotal.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
 }
 
-function checkoutWhatsApp() {
+window.checkoutWhatsApp = function() {
     if (cart.length === 0) {
-        alert("Adicione pelo menos um produto ao seu carrinho antes de enviar o pedido.");
+        alert("Adicione pelo menos um produto ao seu carrinho.");
         return;
     }
 
     const phoneNumber = "5585997560937";
-
-    let message = `*Olá, Leme! Gostaria de fazer o seguinte pedido pelo Catálogo:* \n\n`;
-
+    let message = `*Olá, Leme! Gostaria de fazer o seguinte pedido:* \n\n`;
     let total = 0;
+
     cart.forEach((item, i) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
@@ -326,10 +531,6 @@ function checkoutWhatsApp() {
     });
 
     message += `*Total da Compra:* R$ ${total.toFixed(2).replace('.', ',')}\n\n`;
-    message += `Aguardando informações sobre disponibilidade de estoque e opções de frete! ✨`;
-
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-
-    window.open(whatsappUrl, '_blank');
+    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
 }

@@ -94,7 +94,8 @@ body {
     border-color: transparent;
 }
 
-.brand-logo, .sidebar-brand {
+.brand-logo,
+.sidebar-brand {
     text-decoration: none;
     display: flex;
     align-items: center;
@@ -200,9 +201,17 @@ body {
 }
 
 @keyframes cartPop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.4);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 /*  SIDEBAR MENU  */
@@ -1047,7 +1056,89 @@ body {
     color: #888888;
 }
 
-/*  RESPONSIVIDADE  */
+.admin-card-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.btn-edit-product {
+    background: #4a90e2;
+    /* Azul para editar */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-delete-product {
+    background: #c94a4a;
+    /* Vermelho para excluir */
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-edit-product:hover {
+    background: #357abd;
+}
+
+.btn-delete-product:hover {
+    background: #a33838;
+}
+
+.admin-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.admin-input:focus {
+    border-color: var(--gold-primary);
+}
+
+.form-group {
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-dark);
+}
+
+.stock-badge {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: #a33838;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.stock-ok {
+    color: #20ba5a;
+}
+
 @media (max-width: 768px) {
     .hero-content h1 {
         font-size: 2rem;
