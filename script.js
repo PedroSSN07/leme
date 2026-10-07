@@ -8,7 +8,7 @@ const firebaseConfig = {
   storageBucket: "leme-catalogo.firebasestorage.app",
   messagingSenderId: "392758923254",
   appId: "1:392758923254:web:bad1bee41384f954df01d7"
-};
+}
 
 try {
     app = initializeApp(firebaseConfig);
