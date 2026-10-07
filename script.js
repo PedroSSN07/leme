@@ -1,19 +1,14 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-// =========================================================
-// ⚠️ COLE AS CHAVES DO SEU FIREBASE AQUI EMBAIXO ⚠️
-// =========================================================
+import { initializeApp } from "firebase/app";
+
 const firebaseConfig = {
-    apiKey: "Sua_API_Key_Aqui",
-    authDomain: "seu-projeto.firebaseapp.com",
-    projectId: "seu-projeto",
-    storageBucket: "seu-projeto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
+  apiKey: "AIzaSyCzSpkYnbenWySywpL7UWaR2XG6fmtPE0M",
+  authDomain: "leme-catalogo.firebaseapp.com",
+  projectId: "leme-catalogo",
+  storageBucket: "leme-catalogo.firebasestorage.app",
+  messagingSenderId: "392758923254",
+  appId: "1:392758923254:web:bad1bee41384f954df01d7"
 };
-
-let app, db, productsRef;
 
 try {
     app = initializeApp(firebaseConfig);
