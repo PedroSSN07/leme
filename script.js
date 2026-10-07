@@ -1,9 +1,9 @@
-// Importando o Firebase diretamente via CDN (Nuvem)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // =========================================================
 // ⚠️ COLE AS CHAVES DO SEU FIREBASE AQUI EMBAIXO ⚠️
+// Exemplo: apiKey: "AIzaSyB...",
 // =========================================================
 const firebaseConfig = {
     apiKey: "Sua_API_Key_Aqui",
@@ -14,12 +14,17 @@ const firebaseConfig = {
     appId: "1:123456789:web:abcdef"
 };
 
-// Inicializando o Banco de Dados
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const productsRef = collection(db, "produtos"); // Nome da nossa "tabela"
+let app, db, productsRef;
 
-/* PRODUTOS PADRÃO (Caso o banco de dados esteja vazio no primeiro uso) */
+try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    productsRef = collection(db, "produtos");
+} catch (error) {
+    console.error("Erro na inicialização do Firebase:", error);
+    alert("ERRO: As chaves do Firebase (firebaseConfig) não estão preenchidas corretamente no topo do arquivo script.js.");
+}
+
 const defaultProducts = [
     { id: 1, name: "T-Shirts Básicas Leme", category: "t-shirts-basicas", price: 69.99, stock: 15, sizes: "P, M, G", badge: "Mais Vendido", image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800", description: "Descrição T-Shirts Básicas Leme." },
     { id: 2, name: "Religiosas Leme", category: "religiosas", price: 89.90, stock: 10, sizes: "P, M, G, GG", badge: "Lançamento", image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800", description: "Descrição Religiosas Leme." }
@@ -32,15 +37,13 @@ let selectedModalQuantity = 1;
 let isAdmin = false;
 const ADMIN_PASSWORD = "leme2026";
 
-// ---------------- FUNÇÕES DE BANCO DE DADOS (NUVEM) ---------------- //
-
-// Puxa os dados da Nuvem
 async function loadProducts() {
+    if (!productsRef) return; // Trava se o Firebase falhou
+
     try {
         const querySnapshot = await getDocs(productsRef);
         
         if (querySnapshot.empty) {
-            // Se o banco estiver vazio, ele salva os produtos padrão lá
             products = [...defaultProducts];
             for (let p of products) {
                 await setDoc(doc(productsRef, p.id.toString()), p);
@@ -52,20 +55,17 @@ async function loadProducts() {
             });
         }
         
-        // Organiza pelo ID
         products.sort((a, b) => a.id - b.id);
         renderProducts(products);
         
     } catch (error) {
-        console.error("Erro ao conectar no banco:", error);
-        alert("Erro ao conectar no banco de dados. Você colocou as chaves certas?");
+        console.error("Erro ao puxar dados:", error);
+        alert("Erro de permissão no Firebase. Verifique se o banco de dados está no 'Modo de Teste' (regras liberadas).");
     }
 }
 
-// ------------------------------------------------------------------ //
-
 document.addEventListener('DOMContentLoaded', () => {
-    loadProducts(); // Carrega da nuvem ao abrir o site
+    loadProducts();
     setupEventListeners();
 });
 
@@ -103,13 +103,11 @@ function setupEventListeners() {
     document.getElementById('closeAddModalBtn').addEventListener('click', closeAllDrawers);
 }
 
-// Imagens
 window.processImage = function(inputElement, hiddenInputId, previewImgId, urlInputId) {
     const file = inputElement.files[0];
     if (file) {
-        // Limite de segurança para o Firestore (Base64 não pode ser gigantesco)
-        if (file.size > 800000) { // 800kb
-            alert("A imagem é muito pesada para o banco de dados atual. Escolha uma foto menor que 800kb ou use um link de URL.");
+        if (file.size > 800000) { 
+            alert("A imagem é muito pesada (maior que 800kb). Escolha uma foto menor ou use a opção de Link (URL).");
             inputElement.value = '';
             return;
         }
@@ -185,7 +183,7 @@ function renderProducts(items) {
                 <button class="quick-view-btn" onclick="openQuickView(${product.id})"><i class="fa-solid fa-eye"></i> Ver Peça</button>
             </div>
             <div class="product-info">
-                <span class="product-category">${product.category.replace('-', ' ')}</span>
+                <span class="product-category">${product.category.replace(/-/g, ' ')}</span>
                 <h3 class="product-title">${product.name}</h3>
                 <div class="product-price">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</div>
                 ${isAdmin ? `<p class="stock-badge">Estoque: ${product.stock} un.</p>` : ''}
@@ -195,8 +193,6 @@ function renderProducts(items) {
         productsGrid.appendChild(card);
     });
 }
-
-// ------ ADMIN SALVANDO NA NUVEM ------
 
 window.openAddModal = function() {
     document.getElementById('addProdName').value = '';
@@ -233,16 +229,18 @@ window.saveNewProduct = async function() {
     };
 
     try {
-        // Salva na Nuvem (Firebase)
+        document.getElementById('closeAddModalBtn').innerText = "...";
         await setDoc(doc(productsRef, newProd.id.toString()), newProd);
         
         products.push(newProd);
         closeAllDrawers();
+        document.getElementById('closeAddModalBtn').innerHTML = "&times;";
         filterCategory('todos'); 
         alert("Produto adicionado com sucesso no Banco de Dados!");
     } catch (error) {
         console.error("Erro:", error);
         alert("Erro ao salvar no banco de dados.");
+        document.getElementById('closeAddModalBtn').innerHTML = "&times;";
     }
 }
 
@@ -295,7 +293,6 @@ window.saveProductEdits = async function() {
     };
 
     try {
-        // Atualiza na Nuvem (Firebase)
         await setDoc(doc(productsRef, id.toString()), updatedProd);
         
         products[index] = updatedProd;
@@ -311,7 +308,6 @@ window.saveProductEdits = async function() {
 window.deleteProduct = async function(id) {
     if(confirm("ATENÇÃO: Tem certeza que deseja excluir este produto do banco de dados?")) {
         try {
-            // Deleta da Nuvem (Firebase)
             await deleteDoc(doc(productsRef, id.toString()));
             
             products = products.filter(p => p.id !== id);
@@ -324,13 +320,14 @@ window.deleteProduct = async function(id) {
     }
 }
 
-// ------ FIM DO SISTEMA DE ADMIN ------
-
 window.filterCategory = function(category) {
     const buttons = document.querySelectorAll('.tab-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Pequena correção para não dar conflito nas palavras no GitHub
+    const categoryText = category.replace(/-/g, ' ');
     const activeBtn = Array.from(buttons).find(
-        btn => btn.textContent.toLowerCase().includes(category) || (category === 'todos' && btn.textContent === 'Todos')
+        btn => btn.textContent.toLowerCase().includes(categoryText) || (category === 'todos' && btn.textContent.toLowerCase().includes('todos'))
     );
     if (activeBtn) activeBtn.classList.add('active');
 
