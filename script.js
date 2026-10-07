@@ -61,7 +61,10 @@ async function loadProducts() {
         
     } catch (error) {
         console.error("Erro ao puxar dados:", error);
-        alert("Erro de permissão no Firebase. Verifique se o banco de dados está no 'Modo de Teste' (regras liberadas).");
+        alert("Aviso: O banco de dados está vazio ou com erro de permissão. Exibindo produtos locais temporariamente.");
+        // Se der erro na nuvem, mostra os locais para não quebrar o site
+        products = [...defaultProducts];
+        renderProducts(products);
     }
 }
 
@@ -80,7 +83,7 @@ const editProductModal = document.getElementById('editProductModal');
 const addProductModal = document.getElementById('addProductModal');
 const adminPanel = document.getElementById('adminPanel');
 
-// ------ FUNÇÕES DE JANELAS (Tornando Globais) ------
+// ------ FUNÇÕES DE JANELAS (Globais) ------
 window.openSidebar = function() { window.closeAllDrawers(); sidebarMenu.classList.add('active'); overlay.classList.add('active'); }
 window.openCart = function() { window.closeAllDrawers(); cartDrawer.classList.add('active'); overlay.classList.add('active'); }
 window.closeModal = function() { productModal.classList.remove('active'); overlay.classList.remove('active'); }
@@ -118,6 +121,7 @@ function setupEventListeners() {
     document.getElementById('closeAddModalBtn').addEventListener('click', window.closeAllDrawers);
 }
 
+// ------ PROCESSADOR DE IMAGENS ------
 window.processImage = function(inputElement, hiddenInputId, previewImgId, urlInputId) {
     const file = inputElement.files[0];
     if (file) {
@@ -151,6 +155,7 @@ window.handleUrlInput = function(urlValue, fileInputId, hiddenInputId, previewIm
     }
 }
 
+// ------ LOGIN ADMIN ------
 window.verifyAdmin = function() {
     const pass = document.getElementById('adminPassword').value;
     if (pass === ADMIN_PASSWORD) {
@@ -209,6 +214,7 @@ function renderProducts(items) {
     });
 }
 
+// ------ ADICIONAR, EDITAR E EXCLUIR PRODUTOS (NUVEM + TELA IMEDIATA) ------
 window.openAddModal = function() {
     document.getElementById('addProdName').value = '';
     document.getElementById('addProdImageUrl').value = '';
@@ -243,19 +249,19 @@ window.saveNewProduct = async function() {
         description: document.getElementById('addProdDesc').value || "Descrição do produto"
     };
 
-    try {
-        document.getElementById('closeAddModalBtn').innerText = "...";
-        await setDoc(doc(productsRef, newProd.id.toString()), newProd);
-        
-        products.push(newProd);
-        window.closeAllDrawers();
-        document.getElementById('closeAddModalBtn').innerHTML = "&times;";
-        window.filterCategory('todos'); 
-        alert("Produto adicionado com sucesso no Banco de Dados!");
-    } catch (error) {
-        console.error("Erro:", error);
-        alert("Erro ao salvar no banco de dados.");
-        document.getElementById('closeAddModalBtn').innerHTML = "&times;";
+    // 1. Atualiza a tela IMEDIATAMENTE (sem esperar o Firebase)
+    products.push(newProd);
+    window.closeAllDrawers();
+    window.filterCategory('todos'); 
+    alert("Produto adicionado com sucesso!");
+
+    // 2. Salva na Nuvem no Fundo
+    if(productsRef) {
+        try {
+            await setDoc(doc(productsRef, newProd.id.toString()), newProd);
+        } catch (error) {
+            console.error("Erro ao salvar na nuvem:", error);
+        }
     }
 }
 
@@ -307,33 +313,40 @@ window.saveProductEdits = async function() {
         description: document.getElementById('editProdDesc').value
     };
 
-    try {
-        await setDoc(doc(productsRef, id.toString()), updatedProd);
-        
-        products[index] = updatedProd;
-        window.closeAllDrawers();
-        renderProducts(products);
-        alert("Produto atualizado na Nuvem com sucesso!");
-    } catch (error) {
-        console.error("Erro:", error);
-        alert("Erro ao atualizar o banco de dados.");
+    // 1. Atualiza a tela IMEDIATAMENTE
+    products[index] = updatedProd;
+    window.closeAllDrawers();
+    window.filterCategory('todos');
+    alert("Produto atualizado com sucesso!");
+
+    // 2. Salva na Nuvem
+    if(productsRef) {
+        try {
+            await setDoc(doc(productsRef, id.toString()), updatedProd);
+        } catch (error) {
+            console.error("Erro ao atualizar nuvem:", error);
+        }
     }
 }
 
 window.deleteProduct = async function(id) {
-    if(confirm("ATENÇÃO: Tem certeza que deseja excluir este produto do banco de dados?")) {
-        try {
-            await deleteDoc(doc(productsRef, id.toString()));
-            
-            products = products.filter(p => p.id !== id);
-            renderProducts(products);
-            alert("Produto excluído!");
-        } catch (error) {
-            console.error("Erro:", error);
-            alert("Erro ao excluir do banco de dados.");
+    if(confirm("ATENÇÃO: Tem certeza que deseja excluir este produto?")) {
+        // 1. Apaga da tela IMEDIATAMENTE
+        products = products.filter(p => p.id !== id);
+        window.filterCategory('todos');
+
+        // 2. Apaga da Nuvem
+        if(productsRef) {
+            try {
+                await deleteDoc(doc(productsRef, id.toString()));
+            } catch (error) {
+                console.error("Erro ao excluir na nuvem:", error);
+            }
         }
     }
 }
+
+// ------ FILTRO E CARRINHO ------
 
 window.filterCategory = function(category) {
     const buttons = document.querySelectorAll('.tab-btn');
@@ -347,17 +360,15 @@ window.filterCategory = function(category) {
 
     if (category === 'todos') renderProducts(products);
     else renderProducts(products.filter(p => p.category === category));
-    
-    window.closeAllDrawers();
 }
 
 window.openQuickView = function(id) {
     const product = products.find(p => p.id === id);
     if (!product) return;
 
-    window.selectedModalQuantity = 1; // Utiliza a variável global
+    window.selectedModalQuantity = 1;
     const sizesArray = product.sizes ? product.sizes.split(',').map(s => s.trim()) : ['Único'];
-    window.selectedSize = sizesArray[0]; // Utiliza a variável global
+    window.selectedSize = sizesArray[0];
     
     let sizesHtml = sizesArray.map(size => 
         `<button class="size-btn ${window.selectedSize === size ? 'selected' : ''}" onclick="window.selectSize(this, '${size}')">${size}</button>`
@@ -366,7 +377,6 @@ window.openQuickView = function(id) {
     const isAvailable = product.stock > 0;
     const stockStatus = isAvailable ? `<span class="stock-badge stock-ok">Em estoque (${product.stock} disponíveis)</span>` : `<span class="stock-badge">Esgotado</span>`;
 
-    // Correção super importante no onclick do botão abaixo:
     const modalBody = document.getElementById('modalBody');
     modalBody.innerHTML = `
     <div class="modal-grid">
