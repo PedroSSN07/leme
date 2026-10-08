@@ -5,11 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leme - Catálogo</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cinzel:wght@500;600;700;800&family=Montserrat:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cinzel:wght@500;600;700;800&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -34,12 +33,10 @@
             </a>
 
             <div class="nav-actions">
-                <button class="icon-link admin-btn" id="adminLoginBtn" title="Acesso Restrito"
-                    style="background:none; border:none; cursor:pointer;">
+                <button class="icon-link admin-btn" id="adminLoginBtn" title="Acesso Restrito" style="background:none; border:none; cursor:pointer;">
                     <i class="fa-solid fa-lock"></i>
                 </button>
-                <a href="https://www.instagram.com/use.leme" target="_blank" class="icon-link"
-                    title="Siga no Instagram @use.leme">
+                <a href="https://www.instagram.com/use.leme" target="_blank" class="icon-link" title="Siga no Instagram @use.leme">
                     <i class="fa-brands fa-instagram"></i>
                 </a>
                 <button class="cart-btn" id="openCartBtn" aria-label="Abrir Carrinho">
@@ -56,7 +53,6 @@
                 <i class="fa-solid fa-dharmachakra logo-icon"></i>
                 <div class="logo-text-group">
                     <span class="logo-title">Leme</span>
-                    <span class="logo-subtitle">MODA & ELEGÂNCIA</span>
                 </div>
             </div>
             <button class="close-btn" id="closeNavBtn">&times;</button>
@@ -65,18 +61,15 @@
         <nav class="sidebar-links">
             <ul>
                 <li><a href="#hero" class="active"><i class="fa-solid fa-house"></i> Início </a></li>
-                <li><a href="#catalogo" onclick="window.filterCategory('todos')"><i class="fa-solid fa-border-all"></i>
-                        Todo o Catálogo </a></li>
-                <li><a href="#catalogo" onclick="window.filterCategory('t-shirts-basicas')"><i
-                            class="fa-solid fa-shirt"></i> T-Shirts Básicas </a></li>
-                <li><a href="#catalogo" onclick="window.filterCategory('religiosas')"><i class="fa-solid fa-cross"></i>
-                        Religiosas </a></li>
-                <li><a href="#catalogo" onclick="window.filterCategory('personalizadas')"><i
-                            class="fa-solid fa-wand-magic-sparkles"></i> Personalizadas </a></li>
-                <li><a href="#catalogo" onclick="window.filterCategory('camisas-masculinas')"><i
-                            class="fa-solid fa-user-tie"></i> Camisas masculinas </a></li>
-                <li><a href="#catalogo" onclick="window.filterCategory('oversized')"><i class="fa-solid fa-expand"></i>
-                        Oversized </a></li>
+                <li><a href="#catalogo" onclick="window.filterCategory('todos')"><i class="fa-solid fa-border-all"></i> Todo o Catálogo </a></li>
+                <li><a href="#catalogo" onclick="window.filterCategory('t-shirts-basicas')"><i class="fa-solid fa-shirt"></i> T-Shirts diversas </a></li>
+                <li><a href="#catalogo" onclick="window.filterCategory('basicas-femininas')"><i class="fa-solid fa-person-dress"></i> Básicas Femininas </a></li>
+                <li><a href="#catalogo" onclick="window.filterCategory('basicas-masculinas')"><i class="fa-solid fa-person"></i> Básicas Masculinas </a></li>
+                <li><a href="#catalogo" onclick="window.filterCategory('colecao-leme')"><i class="fa-solid fa-gem"></i> Coleção Leme </a></li>
+                <li><a href="#catalogo" onclick="window.filterCategory('religiosas')"><i class="fa-solid fa-cross"></i> Religiosas </a></li>
+                <li><a href="#catalogo" onclick="window.filterCategory('personalizadas')"><i class="fa-solid fa-wand-magic-sparkles"></i> Personalizadas </a></li>
+                <li><a href="#catalogo" onclick="window.filterCategory('camisas-masculinas')"><i class="fa-solid fa-user-tie"></i> Camisas masculinas </a></li>
+                <li><a href="#catalogo" onclick="window.filterCategory('oversized')"><i class="fa-solid fa-expand"></i> Oversized </a></li>
                 <li class="divider"></li>
                 <li>
                     <a href="https://www.instagram.com/use.leme" target="_blank" class="insta-menu-link">
@@ -88,8 +81,7 @@
 
         <div class="sidebar-footer">
             <p>Dúvidas ou atendimento VIP?</p>
-            <a href="https://wa.me/5585997560937?text=Olá,%20gostaria%20de%20tirar%20uma%20dúvida!" target="_blank"
-                class="btn-whatsapp-sidebar">
+            <a href="https://wa.me/5585997560937?text=Olá, gostaria de tirar uma dúvida!" target="_blank" class="btn-whatsapp-sidebar">
                 <i class="fa-brands fa-whatsapp"></i> Falar com Consultora
             </a>
         </div>
@@ -117,17 +109,18 @@
 
             <div class="filter-tabs">
                 <button class="tab-btn active" onclick="window.filterCategory('todos')">Todos</button>
-                <button class="tab-btn" onclick="window.filterCategory('t-shirts-basicas')">T-Shirts Básicas</button>
+                <button class="tab-btn" onclick="window.filterCategory('t-shirts-basicas')">T-Shirts Diversas</button>
+                <button class="tab-btn" onclick="window.filterCategory('basicas-femininas')">Básicas Femininas</button>
+                <button class="tab-btn" onclick="window.filterCategory('basicas-masculinas')">Básicas Masculinas</button>
+                <button class="tab-btn" onclick="window.filterCategory('colecao-leme')">Coleção Leme</button>
                 <button class="tab-btn" onclick="window.filterCategory('religiosas')">Religiosas</button>
                 <button class="tab-btn" onclick="window.filterCategory('personalizadas')">Personalizadas</button>
-                <button class="tab-btn" onclick="window.filterCategory('camisas-masculinas')">Camisas
-                    masculinas</button>
+                <button class="tab-btn" onclick="window.filterCategory('camisas-masculinas')">Camisas masculinas</button>
                 <button class="tab-btn" onclick="window.filterCategory('oversized')">Oversized</button>
             </div>
 
             <div id="adminPanel" style="display: none; text-align: center; margin-bottom: 30px;">
-                <button class="btn-gold" onclick="window.openAddModal()"><i class="fa-solid fa-plus"></i> Adicionar Novo
-                    Produto</button>
+                <button class="btn-gold" onclick="window.openAddModal()"><i class="fa-solid fa-plus"></i> Adicionar Novo Produto</button>
             </div>
 
             <div class="products-grid" id="productsGrid"></div>
@@ -144,46 +137,36 @@
     <div class="modal-product" id="adminLoginModal">
         <div class="modal-content admin-form-content" style="max-width: 400px; padding: 30px;">
             <button class="close-modal" id="closeAdminLoginBtn">&times;</button>
-            <h2 style="margin-bottom: 20px; font-family: var(--font-heading);"><i class="fa-solid fa-lock"></i> Acesso
-                Admin</h2>
+            <h2 style="margin-bottom: 20px; font-family: var(--font-heading);"><i class="fa-solid fa-lock"></i> Acesso Admin</h2>
             <p style="font-size: 0.9rem; margin-bottom: 15px;">Faça login para editar o catálogo.</p>
-
+            
             <input type="email" id="adminEmail" class="admin-input" placeholder="E-mail">
             <input type="password" id="adminPassword" class="admin-input" placeholder="Senha">
-
-            <button class="btn-gold" id="btnFazerLogin" style="width: 100%; justify-content: center; margin-top: 15px;"
-                onclick="window.verifyAdmin()">Entrar</button>
-            <p id="adminErrorMsg" style="color: red; font-size: 0.8rem; margin-top: 10px; display: none;">E-mail ou
-                senha incorretos.</p>
+            
+            <button class="btn-gold" id="btnFazerLogin" style="width: 100%; justify-content: center; margin-top: 15px;" onclick="window.verifyAdmin()">Entrar</button>
+            <p id="adminErrorMsg" style="color: red; font-size: 0.8rem; margin-top: 10px; display: none;">E-mail ou senha incorretos.</p>
         </div>
     </div>
 
     <div class="modal-product" id="editProductModal">
         <div class="modal-content admin-form-content" style="max-width: 600px; padding: 30px;">
             <button class="close-modal" id="closeEditModalBtn">&times;</button>
-            <h2 style="margin-bottom: 20px; font-family: var(--font-heading);"><i class="fa-solid fa-pen-to-square"></i>
-                Editar Produto</h2>
+            <h2 style="margin-bottom: 20px; font-family: var(--font-heading);"><i class="fa-solid fa-pen-to-square"></i> Editar Produto</h2>
             <input type="hidden" id="editProdId">
-
+            
             <div class="form-group">
                 <label>Nome do Produto</label>
                 <input type="text" id="editProdName" class="admin-input">
             </div>
-
+            
             <div class="form-group">
                 <label>Imagem do Produto</label>
-                <input type="text" id="editProdImageUrl" class="admin-input"
-                    placeholder="Opção 1: Cole o Link (URL) aqui..."
-                    oninput="window.handleUrlInput(this.value, 'editProdImageFile', 'editProdImageBase64', 'editProdImagePreview')">
-                <p
-                    style="text-align: center; font-size: 0.8rem; margin: 5px 0; color: var(--text-muted); font-weight: bold;">
-                    OU</p>
-                <input type="file" id="editProdImageFile" class="admin-input" accept="image/png, image/jpeg, image/webp"
-                    onchange="window.processImage(this, 'editProdImageBase64', 'editProdImagePreview', 'editProdImageUrl')">
+                <input type="text" id="editProdImageUrl" class="admin-input" placeholder="Opção 1: Cole o Link (URL) aqui..." oninput="window.handleUrlInput(this.value, 'editProdImageFile', 'editProdImageBase64', 'editProdImagePreview')">
+                <p style="text-align: center; font-size: 0.8rem; margin: 5px 0; color: var(--text-muted); font-weight: bold;">OU</p>
+                <input type="file" id="editProdImageFile" class="admin-input" accept="image/png, image/jpeg, image/webp" onchange="window.processImage(this, 'editProdImageBase64', 'editProdImagePreview', 'editProdImageUrl')">
                 <input type="hidden" id="editProdImageBase64">
                 <div style="text-align: center;">
-                    <img id="editProdImagePreview" src=""
-                        style="width: 120px; height: 120px; object-fit: cover; margin-top: 10px; border-radius: 8px; border: 2px solid var(--gold-primary); display: none;">
+                    <img id="editProdImagePreview" src="" style="width: 120px; height: 120px; object-fit: cover; margin-top: 10px; border-radius: 8px; border: 2px solid var(--gold-primary); display: none;">
                 </div>
             </div>
 
@@ -191,7 +174,10 @@
                 <div class="form-group">
                     <label>Categoria</label>
                     <select id="editProdCategory" class="admin-input">
-                        <option value="t-shirts-basicas">T-Shirts Básicas</option>
+                        <option value="t-shirts-basicas">T-Shirts Diversas</option>
+                        <option value="basicas-femininas">Básicas Femininas</option>
+                        <option value="basicas-masculinas">Básicas Masculinas</option>
+                        <option value="colecao-leme">Coleção Leme</option>
                         <option value="religiosas">Religiosas</option>
                         <option value="personalizadas">Personalizadas</option>
                         <option value="camisas-masculinas">Camisas Masculinas</option>
@@ -221,17 +207,15 @@
                 <label>Descrição</label>
                 <textarea id="editProdDesc" class="admin-input" rows="3"></textarea>
             </div>
-            <button class="btn-gold" style="width: 100%; justify-content: center; margin-top: 10px;"
-                onclick="window.saveProductEdits()">Salvar Alterações</button>
+            <button class="btn-gold" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="window.saveProductEdits()">Salvar Alterações</button>
         </div>
     </div>
 
     <div class="modal-product" id="addProductModal">
         <div class="modal-content admin-form-content" style="max-width: 600px; padding: 30px;">
             <button class="close-modal" id="closeAddModalBtn">&times;</button>
-            <h2 style="margin-bottom: 20px; font-family: var(--font-heading);"><i class="fa-solid fa-plus"></i> Novo
-                Produto</h2>
-
+            <h2 style="margin-bottom: 20px; font-family: var(--font-heading);"><i class="fa-solid fa-plus"></i> Novo Produto</h2>
+            
             <div class="form-group">
                 <label>Nome do Produto</label>
                 <input type="text" id="addProdName" class="admin-input" placeholder="Ex: T-Shirt Elegance">
@@ -239,18 +223,12 @@
 
             <div class="form-group">
                 <label>Imagem do Produto</label>
-                <input type="text" id="addProdImageUrl" class="admin-input"
-                    placeholder="Opção 1: Cole o Link (URL) aqui..."
-                    oninput="window.handleUrlInput(this.value, 'addProdImageFile', 'addProdImageBase64', 'addProdImagePreview')">
-                <p
-                    style="text-align: center; font-size: 0.8rem; margin: 5px 0; color: var(--text-muted); font-weight: bold;">
-                    OU</p>
-                <input type="file" id="addProdImageFile" class="admin-input" accept="image/png, image/jpeg, image/webp"
-                    onchange="window.processImage(this, 'addProdImageBase64', 'addProdImagePreview', 'addProdImageUrl')">
+                <input type="text" id="addProdImageUrl" class="admin-input" placeholder="Opção 1: Cole o Link (URL) aqui..." oninput="window.handleUrlInput(this.value, 'addProdImageFile', 'addProdImageBase64', 'addProdImagePreview')">
+                <p style="text-align: center; font-size: 0.8rem; margin: 5px 0; color: var(--text-muted); font-weight: bold;">OU</p>
+                <input type="file" id="addProdImageFile" class="admin-input" accept="image/png, image/jpeg, image/webp" onchange="window.processImage(this, 'addProdImageBase64', 'addProdImagePreview', 'addProdImageUrl')">
                 <input type="hidden" id="addProdImageBase64">
                 <div style="text-align: center;">
-                    <img id="addProdImagePreview" src=""
-                        style="width: 120px; height: 120px; object-fit: cover; margin-top: 10px; border-radius: 8px; border: 2px solid var(--gold-primary); display: none;">
+                    <img id="addProdImagePreview" src="" style="width: 120px; height: 120px; object-fit: cover; margin-top: 10px; border-radius: 8px; border: 2px solid var(--gold-primary); display: none;">
                 </div>
             </div>
 
@@ -258,7 +236,10 @@
                 <div class="form-group">
                     <label>Categoria</label>
                     <select id="addProdCategory" class="admin-input">
-                        <option value="t-shirts-basicas">T-Shirts Básicas</option>
+                        <option value="t-shirts-basicas">T-Shirts Diversas</option>
+                        <option value="basicas-femininas">Básicas Femininas</option>
+                        <option value="basicas-masculinas">Básicas Masculinas</option>
+                        <option value="colecao-leme">Coleção Leme</option>
                         <option value="religiosas">Religiosas</option>
                         <option value="personalizadas">Personalizadas</option>
                         <option value="camisas-masculinas">Camisas Masculinas</option>
@@ -286,12 +267,9 @@
             </div>
             <div class="form-group">
                 <label>Descrição</label>
-                <textarea id="addProdDesc" class="admin-input" rows="3"
-                    placeholder="Fale um pouco sobre o produto..."></textarea>
+                <textarea id="addProdDesc" class="admin-input" rows="3" placeholder="Fale um pouco sobre o produto..."></textarea>
             </div>
-            <button class="btn-gold"
-                style="width: 100%; justify-content: center; margin-top: 10px; background: #20ba5a; color: white;"
-                onclick="window.saveNewProduct()">Criar Produto</button>
+            <button class="btn-gold" style="width: 100%; justify-content: center; margin-top: 10px; background: #20ba5a; color: white;" onclick="window.saveNewProduct()">Criar Produto</button>
         </div>
     </div>
 
@@ -306,8 +284,7 @@
                 <span>Subtotal:</span>
                 <strong id="cartTotal">R$ 0,00</strong>
             </div>
-            <p class="cart-info"><i class="fa-solid fa-truck-fast"></i> Enviaremos a confirmação dos tamanhos e frete
-                pelo WhatsApp.</p>
+            <p class="cart-info"><i class="fa-solid fa-truck-fast"></i> Enviaremos a confirmação dos tamanhos e frete pelo WhatsApp.</p>
             <button class="btn-checkout" id="checkoutBtn" onclick="window.checkoutWhatsApp()">
                 <i class="fa-brands fa-whatsapp"></i> Enviar Pedido no WhatsApp
             </button>
@@ -344,8 +321,8 @@
             <div class="footer-col">
                 <h4>Atendimento</h4>
                 <p><i class="fa-solid fa-clock"></i> Seg a Sáb: 09h às 18h</p>
-                <p><i class="fa-solid fa-envelope"></i> username@gmail.com</p>
-                <p><i class="fa-solid fa-location-dot"></i> Envio Seguro por todo Mossoró</p>
+                <p><i class="fa-solid fa-envelope"></i> contato@useleme.com.br</p>
+                <p><i class="fa-solid fa-location-dot"></i> Envio Seguro para Rio Grande do Norte</p>
             </div>
         </div>
 
@@ -356,5 +333,4 @@
 
     <script type="module" src="script.js"></script>
 </body>
-
 </html>
