@@ -15,7 +15,7 @@ test('catalog reads are public and writes require the admin claim', () => {
   assert.match(rules, /allow read:\s*if true;/);
   assert.match(rules, /request\.auth != null/);
   assert.match(rules, /request\.auth\.token\.admin == true/);
-  assert.match(rules, /allow create, update:\s*if isAdmin\(\) && validProduct\(request\.resource\.data\);/);
+  assert.match(rules, /allow create, update:\s*if isAdmin\(\) && validProduct\(request\.resource\.data, productId\);/);
   assert.match(rules, /allow delete:\s*if isAdmin\(\);/);
 });
 
@@ -34,6 +34,8 @@ test('product writes enforce exact fields and bounded values', () => {
   assert.match(rules, /data\.price <= 1000000/);
   assert.match(rules, /data\.stock <= 100000/);
   assert.match(rules, /data\.stock is int/);
+  assert.match(rules, /data\.id <= 9007199254740991/);
+  assert.match(rules, /productId == string\(data\.id\)/);
 });
 
 test('all unmatched Firestore documents are denied', () => {

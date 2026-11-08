@@ -37,6 +37,21 @@ test('catalog mutations validate and persist before changing local state', () =>
   assert.match(edit, /validateProductForWrite\(updatedProd\)/);
   assert.ok(edit.indexOf('await setDoc') < edit.indexOf('products[index]'));
   assert.ok(remove.indexOf('await deleteDoc') < remove.indexOf('products = products.filter'));
+  assert.match(add, /validation\.errors/);
+  assert.match(edit, /validation\.errors/);
+});
+
+test('uploaded images are bounded after base64 expansion', () => {
+  assert.match(script, /MAX_PRODUCT_IMAGE_FILE_BYTES/);
+  assert.match(script, /file\.size > MAX_PRODUCT_IMAGE_FILE_BYTES/);
+  assert.doesNotMatch(script, /file\.size > 800000/);
+});
+
+test('local defaults are replaced immediately by the first persisted product', () => {
+  assert.match(script, /let catalogUsesLocalDefaults\s*=\s*false/);
+  assert.match(script, /querySnapshot\.empty[\s\S]*catalogUsesLocalDefaults\s*=\s*true/);
+  const add = functionBody('window.saveNewProduct = async function ()', 'window.openEditModal');
+  assert.match(add, /if \(catalogUsesLocalDefaults\)[\s\S]*products\s*=\s*\[\]/);
 });
 
 test('external blank-target links isolate their opener', () => {

@@ -23,6 +23,9 @@ export const ALLOWED_CATEGORIES = Object.freeze([
 export const DEFAULT_PRODUCT_IMAGE =
   'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800';
 
+// Keeps the longest supported data-URL prefix plus base64 payload below PRODUCT_LIMITS.image.
+export const MAX_PRODUCT_IMAGE_FILE_BYTES = 674982;
+
 const PRODUCT_KEYS = Object.freeze([
   'badge',
   'category',

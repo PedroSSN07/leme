@@ -19,6 +19,14 @@ test('reconciles administrator state from the Firebase custom claim', () => {
   assert.match(source, /setAdminUi\(hasAdminClaim\)/);
 });
 
+test('stale claim lookups cannot restore administrator UI', () => {
+  assert.match(source, /let authStateGeneration\s*=\s*0/);
+  assert.match(source, /const generation\s*=\s*\+\+authStateGeneration/);
+  assert.match(source, /setAdminUi\(false\)[\s\S]*reconcileAdminState\(user, generation\)/);
+  assert.match(source, /generation !== authStateGeneration/);
+  assert.match(source, /auth\.currentUser\?\.uid !== user\?\.uid/);
+});
+
 test('login never grants administrator state directly', () => {
   const login = between('window.verifyAdmin = async function ()', 'function renderProducts');
   assert.doesNotMatch(login, /isAdmin\s*=\s*true/);

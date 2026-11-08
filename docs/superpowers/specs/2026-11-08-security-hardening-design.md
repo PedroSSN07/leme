@@ -73,4 +73,3 @@ The no-inline-handler requirement applies to attacker-influenced dynamic product
 
 After code verification, an owner must assign `admin: true` to the intended Firebase user using a trusted Admin SDK environment or supported Firebase administration workflow, force that user to refresh/re-authenticate, and deploy `firestore.rules`. Until rules are deployed, the repository changes do not alter the live Firestore policy.
 
-

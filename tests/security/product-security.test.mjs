@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   ALLOWED_CATEGORIES,
   DEFAULT_PRODUCT_IMAGE,
+  MAX_PRODUCT_IMAGE_FILE_BYTES,
   PRODUCT_LIMITS,
   normalizeImageSource,
   normalizeProduct,
@@ -105,4 +106,19 @@ test('allows only https or approved image data URLs', () => {
 
   for (const image of accepted) assert.equal(normalizeImageSource(image), image);
   for (const image of rejected) assert.equal(normalizeImageSource(image), DEFAULT_PRODUCT_IMAGE);
+});
+
+test('accepts Portuguese text at the configured character limit', () => {
+  const result = validateProductForWrite({
+    ...validProduct,
+    name: 'é'.repeat(PRODUCT_LIMITS.name),
+  });
+
+  assert.equal(result.ok, true);
+});
+
+test('raw upload limit always fits the persisted data URL limit', () => {
+  const longestPrefixLength = 'data:image/jpeg;base64,'.length;
+  const encodedLength = 4 * Math.ceil(MAX_PRODUCT_IMAGE_FILE_BYTES / 3);
+  assert.ok(longestPrefixLength + encodedLength <= PRODUCT_LIMITS.image);
 });

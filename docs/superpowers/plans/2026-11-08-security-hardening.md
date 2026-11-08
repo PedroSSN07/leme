@@ -227,4 +227,3 @@ git add SECURITY-DEPLOYMENT.md
 git commit -m "docs: add Firebase security deployment guide"
 ```
 
-

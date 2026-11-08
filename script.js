@@ -3,6 +3,7 @@ import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import {
     DEFAULT_PRODUCT_IMAGE,
+    MAX_PRODUCT_IMAGE_FILE_BYTES,
     normalizeImageSource,
     normalizeProduct,
     validateProductForWrite
@@ -38,6 +39,8 @@ let products = [];
 let cart = [];
 let isAdmin = false;
 let pendingAdminLogin = false;
+let authStateGeneration = 0;
+let catalogUsesLocalDefaults = false;
 
 window.selectedSize = 'M';
 window.selectedModalQuantity = 1;
@@ -49,8 +52,10 @@ async function loadProducts() {
         const querySnapshot = await getDocs(productsRef);
 
         if (querySnapshot.empty) {
+            catalogUsesLocalDefaults = true;
             products = defaultProducts.map(normalizeProduct);
         } else {
+            catalogUsesLocalDefaults = false;
             products = [];
             querySnapshot.forEach((snapshot) => {
                 const fallbackId = Number.parseInt(snapshot.id, 10);
@@ -108,7 +113,7 @@ function setAdminUi(enabled) {
     renderProducts(products);
 }
 
-async function reconcileAdminState(user) {
+async function reconcileAdminState(user, generation) {
     let hasAdminClaim = false;
 
     try {
@@ -120,6 +125,7 @@ async function reconcileAdminState(user) {
         console.error("Não foi possível validar as permissões da conta:", error);
     }
 
+    if (generation !== authStateGeneration || auth.currentUser?.uid !== user?.uid) return;
     setAdminUi(hasAdminClaim);
 
     if (pendingAdminLogin && !hasAdminClaim) {
@@ -141,7 +147,11 @@ async function reconcileAdminState(user) {
 }
 
 if (auth) {
-    onAuthStateChanged(auth, reconcileAdminState);
+    onAuthStateChanged(auth, (user) => {
+        const generation = ++authStateGeneration;
+        setAdminUi(false);
+        void reconcileAdminState(user, generation);
+    });
 }
 
 window.openSidebar = function () { window.closeAllDrawers(); sidebarMenu.classList.add('active'); overlay.classList.add('active'); }
@@ -188,8 +198,8 @@ window.processImage = function (inputElement, hiddenInputId, previewImgId, urlIn
     const file = inputElement.files[0];
     if (file) {
         const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
-        if (file.size > 800000 || !allowedTypes.has(file.type)) {
-            alert("Use uma imagem PNG, JPEG ou WebP com até 800 KB.");
+        if (file.size > MAX_PRODUCT_IMAGE_FILE_BYTES || !allowedTypes.has(file.type)) {
+            alert("Use uma imagem PNG, JPEG ou WebP com até 674 KB.");
             inputElement.value = '';
             return;
         }
@@ -344,11 +354,15 @@ window.saveNewProduct = async function () {
     };
 
     const validation = validateProductForWrite(newProd);
-    if (!validation.ok) return alert(validation.error);
+    if (!validation.ok) return alert(`Revise os campos: ${validation.errors.join(', ')}.`);
     if (!productsRef) return alert("Banco de dados indisponível. O produto não foi salvo.");
 
     try {
         await setDoc(doc(productsRef, newProd.id.toString()), validation.value);
+        if (catalogUsesLocalDefaults) {
+            products = [];
+            catalogUsesLocalDefaults = false;
+        }
         products.push(validation.value);
         window.closeAllDrawers();
         window.filterCategory('todos');
@@ -410,7 +424,7 @@ window.saveProductEdits = async function () {
     };
 
     const validation = validateProductForWrite(updatedProd);
-    if (!validation.ok) return alert(validation.error);
+    if (!validation.ok) return alert(`Revise os campos: ${validation.errors.join(', ')}.`);
     if (!productsRef) return alert("Banco de dados indisponível. As alterações não foram salvas.");
 
     try {
