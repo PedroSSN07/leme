@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { normalizeProduct } from "./product-security.mjs";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCzSpkYnbenWySywpL7UWaR2XG6fmtPE0M",
@@ -31,6 +32,7 @@ const defaultProducts = [
 let products = [];
 let cart = [];
 let isAdmin = false;
+let pendingAdminLogin = false;
 
 window.selectedSize = 'M';
 window.selectedModalQuantity = 1;
@@ -42,14 +44,12 @@ async function loadProducts() {
         const querySnapshot = await getDocs(productsRef);
 
         if (querySnapshot.empty) {
-            products = [...defaultProducts];
-            for (let p of products) {
-                await setDoc(doc(productsRef, p.id.toString()), p);
-            }
+            products = defaultProducts.map(normalizeProduct);
         } else {
             products = [];
-            querySnapshot.forEach((doc) => {
-                products.push(doc.data());
+            querySnapshot.forEach((snapshot) => {
+                const fallbackId = Number.parseInt(snapshot.id, 10);
+                products.push(normalizeProduct(snapshot.data(), { fallbackId }));
             });
         }
 
@@ -58,7 +58,7 @@ async function loadProducts() {
 
     } catch (error) {
         console.error("Erro ao puxar dados da nuvem:", error);
-        products = [...defaultProducts];
+        products = defaultProducts.map(normalizeProduct);
         renderProducts(products);
     }
 }
@@ -77,6 +77,48 @@ const adminLoginModal = document.getElementById('adminLoginModal');
 const editProductModal = document.getElementById('editProductModal');
 const addProductModal = document.getElementById('addProductModal');
 const adminPanel = document.getElementById('adminPanel');
+
+function setAdminUi(enabled) {
+    isAdmin = enabled;
+    adminPanel.style.display = enabled ? 'block' : 'none';
+    renderProducts(products);
+}
+
+async function reconcileAdminState(user) {
+    let hasAdminClaim = false;
+
+    try {
+        if (user) {
+            const tokenResult = await user.getIdTokenResult();
+            hasAdminClaim = tokenResult.claims.admin === true;
+        }
+    } catch (error) {
+        console.error("Não foi possível validar as permissões da conta:", error);
+    }
+
+    setAdminUi(hasAdminClaim);
+
+    if (pendingAdminLogin && !hasAdminClaim) {
+        pendingAdminLogin = false;
+        if (user) await signOut(auth);
+        document.getElementById('adminErrorMsg').style.display = 'block';
+        alert("Esta conta não possui acesso administrativo.");
+        return;
+    }
+
+    if (pendingAdminLogin && hasAdminClaim) {
+        pendingAdminLogin = false;
+        document.getElementById('adminEmail').value = '';
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminErrorMsg').style.display = 'none';
+        alert("Acesso administrativo liberado.");
+        window.closeAllDrawers();
+    }
+}
+
+if (auth) {
+    onAuthStateChanged(auth, reconcileAdminState);
+}
 
 window.openSidebar = function () { window.closeAllDrawers(); sidebarMenu.classList.add('active'); overlay.classList.add('active'); }
 window.openCart = function () { window.closeAllDrawers(); cartDrawer.classList.add('active'); overlay.classList.add('active'); }
@@ -99,13 +141,15 @@ function setupEventListeners() {
     document.getElementById('closeModalBtn').addEventListener('click', window.closeModal);
     overlay.addEventListener('click', window.closeAllDrawers);
 
-    document.getElementById('adminLoginBtn').addEventListener('click', () => {
+    document.getElementById('adminLoginBtn').addEventListener('click', async () => {
         if (isAdmin) {
-            signOut(auth);
-            isAdmin = false;
-            adminPanel.style.display = 'none';
-            alert("Modo Admin desativado.");
-            renderProducts(products);
+            try {
+                await signOut(auth);
+                alert("Modo Admin desativado.");
+            } catch (error) {
+                console.error("Não foi possível encerrar a sessão:", error);
+                alert("Não foi possível encerrar a sessão agora.");
+            }
         } else {
             adminLoginModal.classList.add('active');
             overlay.classList.add('active');
@@ -162,18 +206,10 @@ window.verifyAdmin = async function () {
     btn.innerText = "Aguarde...";
 
     try {
+        pendingAdminLogin = true;
         await signInWithEmailAndPassword(auth, email, pass);
-
-        isAdmin = true;
-        document.getElementById('adminEmail').value = '';
-        document.getElementById('adminPassword').value = '';
-        document.getElementById('adminErrorMsg').style.display = 'none';
-        adminPanel.style.display = 'block';
-
-        alert("Acesso liberado! Banco de dados protegido conectado.");
-        window.closeAllDrawers();
-        renderProducts(products);
     } catch (error) {
+        pendingAdminLogin = false;
         console.error(error);
         document.getElementById('adminErrorMsg').style.display = 'block';
     }
