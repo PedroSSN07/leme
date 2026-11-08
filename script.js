@@ -1,7 +1,12 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { normalizeProduct } from "./product-security.mjs";
+import {
+    DEFAULT_PRODUCT_IMAGE,
+    normalizeImageSource,
+    normalizeProduct,
+    validateProductForWrite
+} from "./product-security.mjs";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCzSpkYnbenWySywpL7UWaR2XG6fmtPE0M",
@@ -77,6 +82,25 @@ const adminLoginModal = document.getElementById('adminLoginModal');
 const editProductModal = document.getElementById('editProductModal');
 const addProductModal = document.getElementById('addProductModal');
 const adminPanel = document.getElementById('adminPanel');
+
+function element(tagName, options = {}) {
+    const node = document.createElement(tagName);
+    if (options.className) node.className = options.className;
+    if (options.textContent !== undefined) node.textContent = String(options.textContent);
+    if (options.attributes) {
+        Object.entries(options.attributes).forEach(([name, value]) => node.setAttribute(name, String(value)));
+    }
+    if (options.onClick) node.addEventListener('click', options.onClick);
+    return node;
+}
+
+function icon(className) {
+    return element('i', { className });
+}
+
+function formatPrice(value) {
+    return Number(value).toFixed(2).replace('.', ',');
+}
 
 function setAdminUi(enabled) {
     isAdmin = enabled;
@@ -163,17 +187,24 @@ function setupEventListeners() {
 window.processImage = function (inputElement, hiddenInputId, previewImgId, urlInputId) {
     const file = inputElement.files[0];
     if (file) {
-        if (file.size > 800000) {
-            alert("A imagem é muito pesada (maior que 800kb). Escolha uma foto menor ou use a opção de Link (URL).");
+        const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
+        if (file.size > 800000 || !allowedTypes.has(file.type)) {
+            alert("Use uma imagem PNG, JPEG ou WebP com até 800 KB.");
             inputElement.value = '';
             return;
         }
         const reader = new FileReader();
         reader.onload = function (e) {
             const base64String = e.target.result;
-            document.getElementById(hiddenInputId).value = base64String;
+            const safeSource = normalizeImageSource(base64String);
+            if (safeSource === DEFAULT_PRODUCT_IMAGE) {
+                alert("A imagem selecionada não é válida.");
+                inputElement.value = '';
+                return;
+            }
+            document.getElementById(hiddenInputId).value = safeSource;
             const previewImg = document.getElementById(previewImgId);
-            previewImg.src = base64String;
+            previewImg.src = safeSource;
             previewImg.style.display = 'inline-block';
             if (urlInputId) document.getElementById(urlInputId).value = '';
         };
@@ -185,8 +216,9 @@ window.handleUrlInput = function (urlValue, fileInputId, hiddenInputId, previewI
     document.getElementById(fileInputId).value = '';
     document.getElementById(hiddenInputId).value = '';
     const previewImg = document.getElementById(previewImgId);
-    if (urlValue.trim() !== '') {
-        previewImg.src = urlValue;
+    const safeSource = normalizeImageSource(urlValue);
+    if (urlValue.trim() !== '' && safeSource !== DEFAULT_PRODUCT_IMAGE) {
+        previewImg.src = safeSource;
         previewImg.style.display = 'inline-block';
     } else {
         previewImg.style.display = 'none';
@@ -218,44 +250,59 @@ window.verifyAdmin = async function () {
 }
 
 function renderProducts(items) {
-    productsGrid.innerHTML = '';
+    productsGrid.replaceChildren();
     if (items.length === 0) {
-        productsGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center;">Nenhum produto encontrado.</p>`;
+        const empty = element('p', { textContent: 'Nenhum produto encontrado.' });
+        empty.style.gridColumn = '1 / -1';
+        empty.style.textAlign = 'center';
+        productsGrid.appendChild(empty);
         return;
     }
 
     items.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'product-card';
+        const card = element('div', { className: 'product-card' });
 
-        let btnCartHtml = product.stock > 0
-            ? `<button class="btn-add-cart" onclick="window.openQuickView(${product.id})"><i class="fa-solid fa-bag-shopping"></i> Comprar</button>`
-            : `<button class="btn-add-cart" style="opacity: 0.5; cursor: not-allowed;"><i class="fa-solid fa-ban"></i> Esgotado</button>`;
+        if (isAdmin) {
+            const controls = element('div', { className: 'admin-card-controls' });
+            const editButton = element('button', { className: 'btn-edit-product', attributes: { title: 'Editar' }, onClick: () => window.openEditModal(product.id) });
+            editButton.appendChild(icon('fa-solid fa-pen'));
+            const deleteButton = element('button', { className: 'btn-delete-product', attributes: { title: 'Excluir' }, onClick: () => window.deleteProduct(product.id) });
+            deleteButton.appendChild(icon('fa-solid fa-trash-can'));
+            controls.append(editButton, deleteButton);
+            card.appendChild(controls);
+        }
 
-        if (product.stock === 0) product.badge = "Esgotado";
+        const badge = element('span', { className: 'product-badge', textContent: product.badge });
+        if (product.stock === 0) badge.textContent = 'Esgotado';
+        card.appendChild(badge);
 
-        const adminControlsHtml = isAdmin ? `
-            <div class="admin-card-controls">
-                <button class="btn-edit-product" onclick="window.openEditModal(${product.id})" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-delete-product" onclick="window.deleteProduct(${product.id})" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
-            </div>
-        ` : '';
+        const imageContainer = element('div', { className: 'product-image' });
+        const image = element('img', { attributes: { src: product.image, alt: product.name } });
+        const quickView = element('button', { className: 'quick-view-btn', onClick: () => window.openQuickView(product.id) });
+        quickView.append(icon('fa-solid fa-eye'), document.createTextNode(' Ver Peça'));
+        imageContainer.append(image, quickView);
 
-        card.innerHTML = `
-            ${adminControlsHtml}
-            <span class="product-badge">${product.badge}</span>
-            <div class="product-image">
-                <img src="${product.image}" alt="${product.name}">
-                <button class="quick-view-btn" onclick="window.openQuickView(${product.id})"><i class="fa-solid fa-eye"></i> Ver Peça</button>
-            </div>
-            <div class="product-info">
-                <span class="product-category">${product.category.replace(/-/g, ' ')}</span>
-                <h3 class="product-title">${product.name}</h3>
-                <div class="product-price">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</div>
-                ${isAdmin ? `<p class="stock-badge">Estoque: ${product.stock} un.</p>` : ''}
-                ${btnCartHtml}
-            </div>
-        `;
+        const info = element('div', { className: 'product-info' });
+        info.append(
+            element('span', { className: 'product-category', textContent: product.category.replace(/-/g, ' ') }),
+            element('h3', { className: 'product-title', textContent: product.name }),
+            element('div', { className: 'product-price', textContent: `R$ ${formatPrice(product.price)}` })
+        );
+        if (isAdmin) info.appendChild(element('p', { className: 'stock-badge', textContent: `Estoque: ${product.stock} un.` }));
+
+        const cartButton = element('button', {
+            className: 'btn-add-cart',
+            textContent: product.stock > 0 ? 'Comprar' : 'Esgotado',
+            onClick: product.stock > 0 ? () => window.openQuickView(product.id) : undefined
+        });
+        cartButton.prepend(icon(product.stock > 0 ? 'fa-solid fa-bag-shopping' : 'fa-solid fa-ban'));
+        if (product.stock <= 0) {
+            cartButton.disabled = true;
+            cartButton.style.opacity = '0.5';
+            cartButton.style.cursor = 'not-allowed';
+        }
+        info.appendChild(cartButton);
+        card.append(imageContainer, info);
         productsGrid.appendChild(card);
     });
 }
@@ -296,18 +343,19 @@ window.saveNewProduct = async function () {
         description: document.getElementById('addProdDesc').value || "Descrição do produto"
     };
 
-    products.push(newProd);
-    window.closeAllDrawers();
-    window.filterCategory('todos');
-    alert("Produto adicionado com sucesso!");
+    const validation = validateProductForWrite(newProd);
+    if (!validation.ok) return alert(validation.error);
+    if (!productsRef) return alert("Banco de dados indisponível. O produto não foi salvo.");
 
-    if (productsRef) {
-        try {
-            await setDoc(doc(productsRef, newProd.id.toString()), newProd);
-        } catch (error) {
-            console.error("Erro ao salvar na nuvem:", error);
-            alert("Permissão negada ou erro ao gravar no banco.");
-        }
+    try {
+        await setDoc(doc(productsRef, newProd.id.toString()), validation.value);
+        products.push(validation.value);
+        window.closeAllDrawers();
+        window.filterCategory('todos');
+        alert("Produto adicionado com sucesso!");
+    } catch (error) {
+        console.error("Erro ao salvar na nuvem:", error);
+        alert("Permissão negada ou erro ao gravar no banco.");
     }
 }
 
@@ -361,18 +409,19 @@ window.saveProductEdits = async function () {
         description: document.getElementById('editProdDesc').value
     };
 
-    products[index] = updatedProd;
-    window.closeAllDrawers();
-    window.filterCategory('todos');
-    alert("Produto atualizado com sucesso!");
+    const validation = validateProductForWrite(updatedProd);
+    if (!validation.ok) return alert(validation.error);
+    if (!productsRef) return alert("Banco de dados indisponível. As alterações não foram salvas.");
 
-    if (productsRef) {
-        try {
-            await setDoc(doc(productsRef, id.toString()), updatedProd);
-        } catch (error) {
-            console.error("Erro ao atualizar nuvem:", error);
-            alert("Permissão negada ou erro ao atualizar o banco.");
-        }
+    try {
+        await setDoc(doc(productsRef, id.toString()), validation.value);
+        products[index] = validation.value;
+        window.closeAllDrawers();
+        window.filterCategory('todos');
+        alert("Produto atualizado com sucesso!");
+    } catch (error) {
+        console.error("Erro ao atualizar nuvem:", error);
+        alert("Permissão negada ou erro ao atualizar o banco.");
     }
 }
 
@@ -380,15 +429,14 @@ window.deleteProduct = async function (id) {
     if (!isAdmin) return alert("Você precisa estar logado para excluir.");
 
     if (confirm("ATENÇÃO: Tem certeza que deseja excluir este produto?")) {
-        products = products.filter(p => p.id !== id);
-        window.filterCategory('todos');
-
-        if (productsRef) {
-            try {
-                await deleteDoc(doc(productsRef, id.toString()));
-            } catch (error) {
-                console.error("Erro ao excluir na nuvem:", error);
-            }
+        if (!productsRef) return alert("Banco de dados indisponível. O produto não foi excluído.");
+        try {
+            await deleteDoc(doc(productsRef, id.toString()));
+            products = products.filter(p => p.id !== id);
+            window.filterCategory('todos');
+        } catch (error) {
+            console.error("Erro ao excluir na nuvem:", error);
+            alert("Permissão negada ou erro ao excluir do banco.");
         }
     }
 }
@@ -415,45 +463,72 @@ window.openQuickView = function (id) {
     const sizesArray = product.sizes ? product.sizes.split(',').map(s => s.trim()) : ['Único'];
     window.selectedSize = sizesArray[0];
 
-    let sizesHtml = sizesArray.map(size =>
-        `<button class="size-btn ${window.selectedSize === size ? 'selected' : ''}" onclick="window.selectSize(this, '${size}')">${size}</button>`
-    ).join('');
-
     const isAvailable = product.stock > 0;
-    const stockStatus = isAvailable ? `<span class="stock-badge stock-ok">Em estoque (${product.stock} disponíveis)</span>` : `<span class="stock-badge">Esgotado</span>`;
-
     const modalBody = document.getElementById('modalBody');
-    modalBody.innerHTML = `
-    <div class="modal-grid">
-      <div class="modal-image">
-        <img src="${product.image}" alt="${product.name}">
-      </div>
-      <div class="modal-details">
-        <h2>${product.name}</h2>
-        <div class="modal-price">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</div>
-        <p class="modal-description">${product.description}</p>
-        <p style="margin-bottom: 15px;">${stockStatus}</p>
-        
-        <div class="size-selector">
-          <label>Selecione o Tamanho:</label>
-          <div class="size-options">${sizesHtml}</div>
-        </div>
+    const grid = element('div', { className: 'modal-grid' });
+    const imageBox = element('div', { className: 'modal-image' });
+    imageBox.appendChild(element('img', { attributes: { src: product.image, alt: product.name } }));
 
-        <div class="quantity-selector">
-          <label>Quantidade:</label>
-          <div class="qty-controls">
-            <button class="qty-btn" onclick="window.changeModalQuantity(-1, ${product.stock})"><i class="fa-solid fa-minus"></i></button>
-            <span class="qty-val" id="modalQtyVal">1</span>
-            <button class="qty-btn" onclick="window.changeModalQuantity(1, ${product.stock})"><i class="fa-solid fa-plus"></i></button>
-          </div>
-        </div>
+    const details = element('div', { className: 'modal-details' });
+    details.append(
+        element('h2', { textContent: product.name }),
+        element('div', { className: 'modal-price', textContent: `R$ ${formatPrice(product.price)}` }),
+        element('p', { className: 'modal-description', textContent: product.description })
+    );
 
-        <button class="btn-gold" style="width:100%; justify-content:center;" ${!isAvailable ? 'disabled style="opacity:0.5;"' : ''} onclick="window.addToCart(${product.id}, window.selectedSize, window.selectedModalQuantity); window.closeModal(); window.openCart();">
-          <i class="fa-solid fa-bag-shopping"></i> ${isAvailable ? 'Confirmar e Adicionar' : 'Indisponível'}
-        </button>
-      </div>
-    </div>
-  `;
+    const stockRow = element('p');
+    stockRow.style.marginBottom = '15px';
+    stockRow.appendChild(element('span', {
+        className: isAvailable ? 'stock-badge stock-ok' : 'stock-badge',
+        textContent: isAvailable ? `Em estoque (${product.stock} disponíveis)` : 'Esgotado'
+    }));
+    details.appendChild(stockRow);
+
+    const sizeSelector = element('div', { className: 'size-selector' });
+    sizeSelector.appendChild(element('label', { textContent: 'Selecione o Tamanho:' }));
+    const sizeOptions = element('div', { className: 'size-options' });
+    sizesArray.forEach(size => {
+        const sizeButton = element('button', {
+            className: `size-btn${window.selectedSize === size ? ' selected' : ''}`,
+            textContent: size
+        });
+        sizeButton.addEventListener('click', () => window.selectSize(sizeButton, size));
+        sizeOptions.appendChild(sizeButton);
+    });
+    sizeSelector.appendChild(sizeOptions);
+    details.appendChild(sizeSelector);
+
+    const quantitySelector = element('div', { className: 'quantity-selector' });
+    quantitySelector.appendChild(element('label', { textContent: 'Quantidade:' }));
+    const quantityControls = element('div', { className: 'qty-controls' });
+    const decrease = element('button', { className: 'qty-btn', onClick: () => window.changeModalQuantity(-1, product.stock) });
+    decrease.appendChild(icon('fa-solid fa-minus'));
+    const quantityValue = element('span', { className: 'qty-val', textContent: '1', attributes: { id: 'modalQtyVal' } });
+    const increase = element('button', { className: 'qty-btn', onClick: () => window.changeModalQuantity(1, product.stock) });
+    increase.appendChild(icon('fa-solid fa-plus'));
+    quantityControls.append(decrease, quantityValue, increase);
+    quantitySelector.appendChild(quantityControls);
+    details.appendChild(quantitySelector);
+
+    const addButton = element('button', {
+        className: 'btn-gold',
+        textContent: isAvailable ? ' Confirmar e Adicionar' : ' Indisponível',
+        onClick: isAvailable ? () => {
+            window.addToCart(product.id, window.selectedSize, window.selectedModalQuantity);
+            window.closeModal();
+            window.openCart();
+        } : undefined
+    });
+    addButton.style.width = '100%';
+    addButton.style.justifyContent = 'center';
+    addButton.prepend(icon('fa-solid fa-bag-shopping'));
+    if (!isAvailable) {
+        addButton.disabled = true;
+        addButton.style.opacity = '0.5';
+    }
+    details.appendChild(addButton);
+    grid.append(imageBox, details);
+    modalBody.replaceChildren(grid);
     productModal.classList.add('active');
     overlay.classList.add('active');
 }
@@ -526,36 +601,45 @@ window.updateCartUI = function () {
     cartCount.textContent = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     if (cart.length === 0) {
-        cartContainer.innerHTML = `
-      <div style="text-align: center; color: var(--text-muted); padding: 40px 0;">
-        <i class="fa-solid fa-bag-shopping" style="font-size: 2.5rem; color: var(--border-color); margin-bottom: 10px;"></i>
-        <p>Seu carrinho está vazio.</p>
-      </div>`;
+        const empty = element('div');
+        empty.style.textAlign = 'center';
+        empty.style.color = 'var(--text-muted)';
+        empty.style.padding = '40px 0';
+        const emptyIcon = icon('fa-solid fa-bag-shopping');
+        emptyIcon.style.fontSize = '2.5rem';
+        emptyIcon.style.color = 'var(--border-color)';
+        emptyIcon.style.marginBottom = '10px';
+        empty.append(emptyIcon, element('p', { textContent: 'Seu carrinho está vazio.' }));
+        cartContainer.replaceChildren(empty);
         cartTotal.textContent = "R$ 0,00";
         return;
     }
 
-    cartContainer.innerHTML = '';
+    cartContainer.replaceChildren();
     let subtotal = 0;
 
     cart.forEach((item, index) => {
         subtotal += item.price * item.quantity;
-        const itemElement = document.createElement('div');
-        itemElement.className = 'cart-item';
-        itemElement.innerHTML = `
-      <img src="${item.image}" alt="${item.name}">
-      <div class="cart-item-info">
-        <div class="cart-item-title">${item.name}</div>
-        <div class="cart-item-size">Tam: <strong>${item.size}</strong></div>
-        <div class="cart-qty-row">
-            <button class="btn-qty-mini" onclick="window.updateCartQuantity(${index}, -1)"><i class="fa-solid fa-minus"></i></button>
-            <span class="cart-qty-num">${item.quantity}</span>
-            <button class="btn-qty-mini" onclick="window.updateCartQuantity(${index}, 1)"><i class="fa-solid fa-plus"></i></button>
-        </div>
-        <div class="cart-item-price">R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}</div>
-      </div>
-      <button class="cart-item-remove" onclick="window.removeFromCart(${index})"><i class="fa-solid fa-trash-can"></i></button>
-    `;
+        const itemElement = element('div', { className: 'cart-item' });
+        itemElement.appendChild(element('img', { attributes: { src: item.image, alt: item.name } }));
+
+        const itemInfo = element('div', { className: 'cart-item-info' });
+        itemInfo.appendChild(element('div', { className: 'cart-item-title', textContent: item.name }));
+        const itemSize = element('div', { className: 'cart-item-size', textContent: 'Tam: ' });
+        itemSize.appendChild(element('strong', { textContent: item.size }));
+        itemInfo.appendChild(itemSize);
+
+        const quantityRow = element('div', { className: 'cart-qty-row' });
+        const minusButton = element('button', { className: 'btn-qty-mini', onClick: () => window.updateCartQuantity(index, -1) });
+        minusButton.appendChild(icon('fa-solid fa-minus'));
+        const plusButton = element('button', { className: 'btn-qty-mini', onClick: () => window.updateCartQuantity(index, 1) });
+        plusButton.appendChild(icon('fa-solid fa-plus'));
+        quantityRow.append(minusButton, element('span', { className: 'cart-qty-num', textContent: item.quantity }), plusButton);
+        itemInfo.append(quantityRow, element('div', { className: 'cart-item-price', textContent: `R$ ${formatPrice(item.price * item.quantity)}` }));
+
+        const removeButton = element('button', { className: 'cart-item-remove', onClick: () => window.removeFromCart(index) });
+        removeButton.appendChild(icon('fa-solid fa-trash-can'));
+        itemElement.append(itemInfo, removeButton);
         cartContainer.appendChild(itemElement);
     });
 
@@ -580,5 +664,6 @@ window.checkoutWhatsApp = function () {
 
     message += `*Total da Compra:* R$ ${total.toFixed(2).replace('.', ',')}\n\n`;
     const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+    const checkoutWindow = window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank', 'noopener');
+    if (checkoutWindow) checkoutWindow.opener = null;
 }
