@@ -226,4 +226,3 @@ Expected: no whitespace errors; changes match the approved spec and contain no c
 git add SECURITY-DEPLOYMENT.md
 git commit -m "docs: add Firebase security deployment guide"
 ```
-

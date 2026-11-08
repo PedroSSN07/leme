@@ -176,7 +176,7 @@ function setupEventListeners() {
     overlay.addEventListener('click', window.closeAllDrawers);
 
     document.getElementById('adminLoginBtn').addEventListener('click', async () => {
-        if (isAdmin) {
+        if (isAdmin && !catalogUsesLocalDefaults) {
             try {
                 await signOut(auth);
                 alert("Modo Admin desativado.");
@@ -374,6 +374,7 @@ window.saveNewProduct = async function () {
 }
 
 window.openEditModal = function (id) {
+    if (catalogUsesLocalDefaults) return alert("Os produtos de exemplo não estão salvos. Crie o primeiro produto real para substituí-los.");
     const product = products.find(p => p.id === id);
     if (!product) return;
 
@@ -441,6 +442,7 @@ window.saveProductEdits = async function () {
 
 window.deleteProduct = async function (id) {
     if (!isAdmin) return alert("Você precisa estar logado para excluir.");
+    if (catalogUsesLocalDefaults) return alert("Os produtos de exemplo não estão salvos e não podem ser excluídos.");
 
     if (confirm("ATENÇÃO: Tem certeza que deseja excluir este produto?")) {
         if (!productsRef) return alert("Banco de dados indisponível. O produto não foi excluído.");
