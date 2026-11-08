@@ -176,7 +176,7 @@ function setupEventListeners() {
     overlay.addEventListener('click', window.closeAllDrawers);
 
     document.getElementById('adminLoginBtn').addEventListener('click', async () => {
-        if (isAdmin && !catalogUsesLocalDefaults) {
+        if (isAdmin) {
             try {
                 await signOut(auth);
                 alert("Modo Admin desativado.");
@@ -272,7 +272,7 @@ function renderProducts(items) {
     items.forEach(product => {
         const card = element('div', { className: 'product-card' });
 
-        if (isAdmin) {
+        if (isAdmin && !catalogUsesLocalDefaults) {
             const controls = element('div', { className: 'admin-card-controls' });
             const editButton = element('button', { className: 'btn-edit-product', attributes: { title: 'Editar' }, onClick: () => window.openEditModal(product.id) });
             editButton.appendChild(icon('fa-solid fa-pen'));

@@ -55,7 +55,11 @@ test('local defaults are replaced immediately by the first persisted product', (
 });
 
 test('local placeholder products cannot be edited or deleted as persisted records', () => {
-  assert.match(script, /if \(isAdmin && !catalogUsesLocalDefaults\)/);
+  const setup = functionBody('function setupEventListeners()', 'window.processImage');
+  const render = functionBody('function renderProducts', 'window.openAddModal');
+  assert.match(setup, /if \(isAdmin\)/);
+  assert.doesNotMatch(setup, /isAdmin && !catalogUsesLocalDefaults/);
+  assert.match(render, /if \(isAdmin && !catalogUsesLocalDefaults\)/);
   const editOpen = functionBody('window.openEditModal = function', 'window.saveProductEdits');
   const remove = functionBody('window.deleteProduct = async function', 'window.filterCategory');
   assert.match(editOpen, /if \(catalogUsesLocalDefaults\) return/);
